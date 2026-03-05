@@ -1,0 +1,95 @@
+﻿<div class="top-row pl-4 navbar navbar-dark">
+    <a class="navbar-brand" href="">FutebolNacional</a>
+    <button class="navbar-toggler" @onclick="ToggleNavMenu">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+
+@*<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+        <ul class="nav flex-column">
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    <span class="oi oi-home" aria-hidden="true"></span> Home
+                </NavLink>
+            </li>
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="counter">
+                    <span class="oi oi-plus" aria-hidden="true"></span> Counter
+                </NavLink>
+            </li>
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="fetchdata">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
+                </NavLink>
+            </li>
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="jogos">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span> Brasileirão
+                </NavLink>
+            </li>
+        </ul>
+    </div>*@
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <!-- Item Home -->
+        <div class="nav-item px-3 text-white">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="oi oi-home me-2" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3 custom-dropdown" @onmouseleave="() => expandSubMenu = false">
+            <a class="nav-link dropdown-toggle btn btn-link w-100 text-start border-0 text-white shadow-none d-flex align-items-center"
+               role="button"
+               @onclick="ToggleSubMenu"
+               @onmouseenter="() => expandSubMenu = true">
+                <span class="oi oi-list-rich me-2" aria-hidden="true"></span>
+                <span>Brasileirão</span>
+            </a>
+
+            @* Usamos a classe condicional 'menu-aberto' *@
+        <ul class="dropdown-menu dropdown-menu-dark shadow-none border-0 submenu-lista @(expandSubMenu ? "menu-aberto" : "")">
+            <li>
+                <NavLink class="dropdown-item" href="jogos" @onclick="ToggleNavMenu">
+                    <i class="fas fa-calendar-alt me-2"></i> Jogos
+                </NavLink>
+            </li>
+            <li>
+                <NavLink class="dropdown-item" href="classificacao" @onclick="ToggleNavMenu">
+                    <i class="fas fa-chart-bar me-2"></i> Classificação
+                </NavLink>
+            </li>
+            <li>
+                <NavLink class="dropdown-item" href="estatisticas" @onclick="ToggleNavMenu">
+                    <i class="fas fa-chart-bar me-2"></i> Estatísticas
+                </NavLink>
+            </li>
+        </ul>
+        </div>
+
+
+    </nav>
+</div>
+
+@code { private bool collapseNavMenu = true;
+            private bool expandSubMenu = false;
+
+            private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+            private void ToggleNavMenu() => collapseNavMenu = !collapseNavMenu;
+
+            // Abre/Fecha no clique (Importante para Mobile e Desktop)
+            private void ToggleSubMenu()
+            {
+                expandSubMenu = !expandSubMenu;
+            }
+
+            private void HandleMouseLeave()
+            {
+                expandSubMenu = false;
+                StateHasChanged(); // Força o Blazor a processar o fechamento
+            } }
+
+
+

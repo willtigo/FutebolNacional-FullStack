@@ -1,0 +1,385 @@
+﻿@page "/estatisticas"
+@using FutebolNacional.Models
+@inject IHttpClientFactory ClientFactory
+
+
+<style>
+    .barra-container {
+        height: 12px;
+        background-color: #e9ecef;
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 4px;
+    }
+
+    .barra-feita {
+        background-color: #28a745;
+        transition: width 1s;
+    }
+
+    .barra-sofrida {
+        background-color: #dc3545;
+        transition: width 1s;
+    }
+
+    .sigla-clube {
+        width: 50px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .saldo-card {
+        min-width: 50px;
+        font-weight: bold;
+        text-align: center;
+        border-radius: 4px;
+        padding: 5px;
+    }
+
+    /* Força o cabeçalho 'Saldo' a alinhar com o card à direita */
+    .col-saldo-header {
+        width: 100px;
+        text-align: center;
+    }
+
+    .col-saldo-body {
+        width: 100px;
+    }
+
+    /* Container da barra com cor de fundo mais visível */
+    .barra-bg {
+        background-color: #eee;
+        border-radius: 10px;
+        height: 12px;
+        width: 100%;
+        position: relative;
+    }
+
+    .chevron-icon {
+        transition: transform 0.3s ease;
+        color: #adb5bd;
+    }
+
+    .chevron-rotated {
+        transform: rotate(180deg);
+        color: #198754; /* Muda para verde quando aberto */
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold">📊 Estatísticas de Gols</h3>
+        <select class="form-select w-25" @onchange="MudarAno">
+            <option value="2024">Temporada 2024</option>
+            <option value="2023">Temporada 2023</option>
+            <option value="2022">Temporada 2022</option>
+        </select>
+    </div>
+
+    @if (carregando)
+    {
+        <div class="text-center p-5"><div class="spinner-border text-success"></div></div> }
+    else
+    {
+        <div class="table-responsive bg-white shadow-sm rounded p-3">
+
+
+            <!-- Bloco do Pódio com Verificação -->
+            <div class="row mb-5 text-center animate__animated animate__fadeIn">
+                <div class="col-12">
+                    <h4 class="fw-bold mb-4">🏆 Top 5 Artilheiros - @anoSelecionado</h4>
+                </div>
+
+                @if (topArtilheiros != null && topArtilheiros.Any())
+                {
+                    @foreach (var (art, index) in topArtilheiros.Select((value, i) => (value, i)))
+                    {
+                        <div class="col-md-2 @(index == 0 ? "offset-md-1" : "")">
+                            <div class="card border-0 shadow-sm p-3 h-100 position-relative"
+                                 style="border-bottom: 4px solid @(index == 0 ? "#ffd700" : index == 1 ? "#c0c0c0" : index == 2 ? "#cd7f32" : "#eee") !important;">
+
+                                <div class="position-absolute top-0 start-50 translate-middle-y bg-white rounded-circle shadow-sm" style="width:40px; height:40px; line-height:40px;">
+                                    @(index == 0 ? "🥇" : index == 1 ? "🥈" : index == 2 ? "🥉" : (index + 1) + "º")
+                                </div>
+
+                                <img src="img/escudos/@(art.Time).png" width="30" class="mx-auto mb-2 mt-2" />
+                                <h6 class="mb-1 fw-bold text-truncate">@art.Nome</h6>
+                                <div class="badge bg-dark text-white fw-bold px-2 py-1">@art.Gols Gols</div>
+                            </div>
+                        </div>} }
+                else
+                { <!-- MENSAGEM QUANDO NÃO HÁ DADOS -->
+                    <div class="col-12">
+                        <div class="alert alert-light border shadow-sm d-inline-block p-4">
+                            <i class="fas fa-info-circle text-primary mb-2 d-block" style="font-size: 1.5rem;"></i>
+                            <span class="text-muted">Os dados detalhados de artilharia para a temporada <strong>@anoSelecionado</strong> ainda não foram processados.</span>
+                        </div>
+                    </div>}
+            </div>
+
+
+
+            <table class="table align-middle" style="table-layout: fixed; width: 100%;">
+                <thead>
+                    <tr class="text-muted small text-uppercase border-bottom">
+                        <!-- Coluna Clube com Ordenador -->
+                        <th style="width: 150px; cursor: pointer;" @onclick='() => Ordenar("Nome")' class="py-3">
+                            CLUBE <i class="fas fa-sort ms-1"></i>
+                        </th>
+
+                        <!-- Coluna Desempenho com Ordenador -->
+                        <th style="cursor: pointer;" @onclick='() => Ordenar("Gols")' class="py-3">
+                            DESEMPENHO DE GOLS <i class="fas fa-sort ms-1"></i>
+                        </th>
+
+                        <!-- Coluna Saldo com Ordenador (Largura fixa para alinhar com o card) -->
+                        <th style="width: 120px; cursor: pointer;" @onclick='() => Ordenar("Saldo")' class="text-center py-3">
+                            SALDO <i class="fas fa-sort ms-1"></i>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var clube in listaRanking)
+                    {
+                        <tr>
+                            <!-- Identificação do Clube -->
+                            <td style="width: 150px; cursor: pointer;" @onclick="() => clube.ExibirDetalhes = !clube.ExibirDetalhes">
+                                <div class="d-flex align-items-center w-100">
+                                    <!-- Ícone de Ranking/Medalha -->
+                                    <span class="me-1">
+                                        @if (listaRanking.IndexOf(clube) == 0)
+                                        {<span>🥇</span> }
+                                        else if (listaRanking.IndexOf(clube) == 1)
+                                        { <span>🥈</span> }
+                                        else if (listaRanking.IndexOf(clube) == 2)
+                                        { <span>🥉</span>}
+                                    </span>
+
+                                    <img src="img/escudos/@(clube.Nome).png" width="25" class="me-2" />
+                                    <span class="fw-bold">@clube.Sigla</span>
+
+                                    <!-- O ÍCONE DO BOTÃO (Agora forçado com margem à esquerda automática) -->
+                                    <i class="fas fa-chevron-down chevron-icon @(clube.ExibirDetalhes ? "chevron-rotated" : "") ms-auto"></i>
+                                </div>
+                            </td>
+
+                            <!-- Área das Barras de Progresso -->
+                            <td style="width: 60%; padding: 20px 15px;">
+                                <!-- Bloco Gols Feitos -->
+                                <div class="mb-3">
+                                    <!-- INFORMAÇÃO ACIMA DA BARRA VERDE -->
+                                    <div class="small fw-bold mb-1" style="color: #157347;">
+                                        Gols Feitos: @clube.GolsFeitos
+                                    </div>
+                                    <div class="barra-bg" style="background-color: #eee; height: 10px; border-radius: 5px; overflow: hidden;"
+                                         title="Representa @(clube.GetPorcentagemFeitos(totalGolsCampeonato).ToString("F2"))% do total do campeonato">
+                                        <div style="width: @(clube.GetPorcentagemFeitos(totalGolsCampeonato).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))%;
+                        background-color: #28a745; height: 100%; transition: width 1s;">
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Bloco Gols Levados -->
+                                <div>
+                                    <!-- INFORMAÇÃO ACIMA DA BARRA VERMELHA -->
+                                    <div class="small fw-bold mb-1" style="color: #bb2d3b;">
+                                        Gols Levados: @clube.GolsSofridos
+                                    </div>
+                                    <div class="barra-bg" style="background-color: #eee; height: 10px; border-radius: 5px; overflow: hidden;"
+                                         title="Representa @(clube.GetPorcentagemSofridos(totalGolsCampeonato).ToString("F2"))% do total do campeonato">
+                                        <div style="width: @(clube.GetPorcentagemSofridos(totalGolsCampeonato).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))%;
+                        background-color: #dc3545; height: 100%; transition: width 1s;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <!-- Card de Saldo (Perfeitamente Alinhado com o Cabeçalho) -->
+                            <td>
+                                <div class="card shadow-sm border-0 mx-auto @(clube.Saldo >= 0 ? "bg-success" : "bg-danger") text-white text-center"
+                                     style="width: 70px; padding: 5px; border-radius: 8px;">
+                                    <small style="font-size: 0.55rem; opacity: 0.8; display: block;">SALDO</small>
+                                    <div class="fw-bold" style="font-size: 0.9rem;">
+                                        @(clube.Saldo > 0 ? "+" : "")@clube.Saldo
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+
+                        @if (clube.ExibirDetalhes)
+                        {
+                            <tr class="bg-light shadow-sm">
+                                <td colspan="3" class="p-0 border-0">
+                                    <!-- A animação acontece nesta div -->
+                                    <div class="animate__animated animate__fadeInDown animate__faster p-3">
+                                        <div class="d-flex justify-content-around align-items-center">
+
+                                            <!-- Bloco Artilheiro (Com ícone de chuteira) -->
+                                            <div class="text-center">
+                                                <small class="text-muted d-block mb-1">👟 Principal Artilheiro</small>
+                                                <span class="fw-bold text-dark">@clube.MelhorArtilheiro</span>
+                                                <span class="badge rounded-pill bg-success ms-2">@clube.GolsArtilheiro Gols</span>
+                                            </div>
+
+                                            <!-- Divisor Vertical -->
+                                            <div style="width: 1px; height: 40px; background-color: #dee2e6;"></div>
+
+                                            <!-- Bloco de Cartões -->
+                                            <div class="d-flex gap-4">
+                                                <div class="text-center">
+                                                    <small class="text-muted d-block mb-1">Amarelos</small>
+                                                    <div class="d-flex align-items-center justify-content-center">
+                                                        <i class="fas fa-id-card text-warning me-2"></i>
+                                                        <span class="fw-bold">@clube.Amarelos</span>
+                                                    </div>
+                                                </div>
+                                                <div class="text-center">
+                                                    <small class="text-muted d-block mb-1">Vermelhos</small>
+                                                    <div class="d-flex align-items-center justify-content-center">
+                                                        <i class="fas fa-id-card text-danger me-2"></i>
+                                                        <span class="fw-bold">@clube.Vermelhos</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+
+                    }
+                </tbody>
+            </table>
+
+        </div>}
+</div>
+
+
+@code {
+
+    private List<EstatisticaClube> listaRanking = new();
+    private int totalGolsCampeonato = 0;
+    private int maxGols = 0; // <--- ADICIONE ESTA LINHA AQUI
+    private int anoSelecionado = 2024;
+    private bool carregando = true;
+
+    private List<ArtilheiroGeral> topArtilheiros = new();
+
+    protected override async Task OnInitializedAsync() => await CarregarDados();
+
+    private async Task CarregarDados()
+    {
+        carregando = true;
+        // RESETAR DADOS ANTIGOS ANTES DE BUSCAR OS NOVOS
+        topArtilheiros = new();
+        listaRanking = new();
+        totalGolsCampeonato = 0;
+        try
+        {
+            var client = ClientFactory.CreateClient("BrasileiraoAPI");
+            var jogos = await client.GetFromJsonAsync<List<Jogo>>($"api/jogos?ano={anoSelecionado}");
+            var eventos = await client.GetFromJsonAsync<List<EventosJogos>>($"api/jogos/eventos-temporada/{anoSelecionado}");
+
+            if (jogos != null && jogos.Any())
+            {
+                totalGolsCampeonato = jogos.Sum(j => j.GolsMandante + j.GolsVisitante);
+
+                var desempenhoCasa = jogos.GroupBy(j => j.TimeMandante).Select(g => new
+                {
+                    Nome = g.Key,
+                    F = g.Sum(x => x.GolsMandante),
+                    S = g.Sum(x => x.GolsVisitante)
+                });
+
+                var desempenhoFora = jogos.GroupBy(j => j.TimeVisitante).Select(g => new
+                {
+                    Nome = g.Key,
+                    F = g.Sum(x => x.GolsVisitante),
+                    S = g.Sum(x => x.GolsMandante)
+                });
+
+                listaRanking = desempenhoCasa.Concat(desempenhoFora)
+                    .GroupBy(x => x.Nome)
+                    .Select(g => new EstatisticaClube
+                    {
+                        Nome = g.Key,
+                        GolsFeitos = g.Sum(x => x.F),
+                        GolsSofridos = g.Sum(x => x.S)
+                    })
+                    .OrderByDescending(x => x.GolsFeitos)
+                    .ToList();
+
+                foreach (var clube in listaRanking)
+                {
+                    var evClube = eventos.Where(e => e.TimeNome == clube.Nome).ToList();
+                    clube.Amarelos = evClube.Count(e => e.Tipo == "Card" && e.Detalhe.Contains("Yellow"));
+                    clube.Vermelhos = evClube.Count(e => e.Tipo == "Card" && e.Detalhe.Contains("Red"));
+
+                    var artilheiro = evClube.Where(e => e.Tipo == "Goal")
+                                            .GroupBy(e => e.Jogador)
+                                            .OrderByDescending(g => g.Count())
+                                            .FirstOrDefault();
+
+                    if (artilheiro != null)
+                    {
+                        clube.MelhorArtilheiro = artilheiro.Key;
+                        clube.GolsArtilheiro = artilheiro.Count();
+                    }
+                }
+
+                for (int i = 0; i < listaRanking.Count; i++)
+                {
+                    listaRanking[i].PosicaoAtaque = i + 1;
+                }
+
+                // --- INSERÇÃO DO TOP 5 ARTILHEIROS GERAL ---
+                if (eventos != null && eventos.Any())
+                {
+                    topArtilheiros = eventos
+                        .Where(e => e.Tipo == "Goal")
+                        .GroupBy(e => new { e.Jogador, e.TimeNome })
+                        .Select(g => new ArtilheiroGeral
+                        {
+                            Nome = g.Key.Jogador,
+                            Time = g.Key.TimeNome,
+                            Gols = g.Count()
+                        })
+                        .OrderByDescending(g => g.Gols)
+                        .Take(5)
+                        .ToList();
+                }
+
+                if (listaRanking.Any())
+                {
+                    maxGols = listaRanking.Max(x => Math.Max(x.GolsFeitos, x.GolsSofridos));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Erro ao processar estatísticas: " + ex.Message);
+        }
+        finally
+        {
+            carregando = false;
+        }
+    }
+
+
+
+
+    private double CalcularPorcentagem(int gols) =>
+    totalGolsCampeonato > 0 ? (double)gols / totalGolsCampeonato * 100 * 5 : 0; // x5 para dar volume visual
+
+    private async Task MudarAno(ChangeEventArgs e)
+    {
+        anoSelecionado = int.Parse(e.Value.ToString());
+        await CarregarDados();
+    }
+
+    private void Ordenar(string campo)
+    {
+        if (campo == "Nome") listaRanking = listaRanking.OrderBy(x => x.Nome).ToList();
+        else if (campo == "Gols") listaRanking = listaRanking.OrderByDescending(x => x.GolsFeitos).ToList();
+        else if (campo == "Saldo") listaRanking = listaRanking.OrderByDescending(x => x.Saldo).ToList();
+    } }
+

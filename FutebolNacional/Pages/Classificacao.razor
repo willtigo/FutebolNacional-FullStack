@@ -1,0 +1,442 @@
+﻿@page "/classificacao"
+@using FutebolNacional.Models
+@inject IHttpClientFactory ClientFactory
+
+<style>
+    .grid-calendario {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr); /* 7 dias da semana */
+        gap: 10px;
+    }
+
+    .dia-bloco {
+        aspect-ratio: 1 / 1;
+        border: 1px solid #eee;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border-radius: 8px;
+        font-weight: 500;
+    }
+
+    .dia-com-jogo {
+        background-color: #e8f5e9; /* Verde clarinho */
+        border-color: #2e7d32;
+        color: #1b5e20;
+    }
+
+    .dia-ativo {
+        background-color: #2e7d32 !important;
+        color: white !important;
+    }
+
+    .dot {
+        font-size: 8px;
+        margin-top: -5px;
+    }
+
+    .grid-dias-semana, .grid-calendario {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        text-align: center;
+    }
+
+        .grid-dias-semana div {
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #666;
+            padding-bottom: 10px;
+        }
+
+    .dia-bloco {
+        aspect-ratio: 1 / 1;
+        border: 1px solid #f0f0f0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.2s;
+        position: relative;
+    }
+
+        .dia-bloco:hover {
+            background-color: #f8f9fa;
+            transform: scale(1.05);
+            z-index: 5;
+        }
+
+    .dia-com-jogo {
+        background-color: #e8f5e9;
+        border-color: #2e7d32;
+        color: #1b5e20;
+        font-weight: bold;
+    }
+
+    .dia-hoje {
+        border: 2px solid #007bff;
+    }
+
+    .badge-jogo {
+        font-size: 0.6rem;
+        margin-top: 2px;
+    }
+
+    .dia-vazio {
+        aspect-ratio: 1 / 1;
+    }
+
+    /* Cores de Classificação */
+    .pos-g4 {
+        border-left: 5px solid #28a745;
+        background-color: rgba(40, 167, 69, 0.05);
+    }
+    /* G4 */
+    .pos-sula {
+        border-left: 5px solid #007bff;
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+    /* 5º ao 12º */
+    .pos-z4 {
+        border-left: 5px solid #dc3545;
+        background-color: rgba(220, 53, 69, 0.05);
+    }
+    /* Z4 */
+
+    .tabela-snapshot th {
+        font-size: 0.75rem;
+        color: #666;
+        text-align: center;
+    }
+
+    .tabela-snapshot td {
+        text-align: center;
+        font-weight: 500;
+    }
+
+    .col-time {
+        text-align: left !important;
+        min-width: 180px;
+    }
+</style>
+
+<div class="d-flex align-items-center justify-content-center bg-light p-4 mb-4 rounded shadow-sm"
+     style="border-left: 8px solid #005c2d; border-right: 8px solid #f9dd16;">
+
+    <img src="img/escudos/brasileiro.png" alt="Logo Brasileirão"
+         style="height: 80px; margin-right: 20px;" />
+
+    <div class="text-center">
+        <h2 class="fw-bold mb-0" style="color: #004a29; letter-spacing: 1px;">
+            CAMPEONATO BRASILEIRO
+        </h2>
+        <span class="badge bg-dark text-white text-uppercase" style="font-size: 0.9rem; letter-spacing: 2px;">
+            Temporadas 2022 • 2023 • 2024
+        </span>
+    </div>
+</div>
+
+@if (mesExibido > 0)
+{
+    <div class="calendario-container bg-white p-3 shadow-sm rounded">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <!-- Agora o NomeMes(mesExibido) só roda quando mesExibido for 1 a 12 -->
+            <h5>@NomeMes(mesExibido) / @anoSelecionado</h5>
+            <div class="col-md-4">
+                <label class="form-label fw-bold small text-muted">SELECIONE A TEMPORADA</label>
+                <select class="form-select shadow-sm border-2" @onchange="MudarTemporada">
+                    <option value="2024" selected="@(anoSelecionado == 2024)">Temporada 2024</option>
+                    <option value="2023" selected="@(anoSelecionado == 2023)">Temporada 2023</option>
+                    <option value="2022" selected="@(anoSelecionado == 2022)">Temporada 2022</option>
+                </select>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-outline-secondary btn-sm" @onclick="() => MudarMes(-1)">‹</button>
+                <button class="btn btn-outline-secondary btn-sm" @onclick="() => MudarMes(1)">›</button>
+            </div>
+        </div>
+
+        <div class="grid-calendario">
+            @if (mesExibido > 0 && anoSelecionado > 0)
+            {
+                // REMOVA O @{ e deixe as variáveis diretamente aqui:
+                var primeiroDiaDoMes = new DateTime(anoSelecionado, mesExibido, 1);
+                int espacosVazios = (int)primeiroDiaDoMes.DayOfWeek;
+
+                @for (int i = 0; i < espacosVazios; i++)
+                {
+                    <div class="dia-vazio border-0"></div>}
+
+                @for (int dia = 1; dia <= DateTime.DaysInMonth(anoSelecionado, mesExibido); dia++)
+                {
+                    var diaLoop = dia;
+                    var dataCorrente = new DateTime(anoSelecionado, mesExibido, diaLoop);
+                    bool temJogo = diasComJogo != null && diasComJogo.Contains(dataCorrente.Date);
+
+                    <div class="dia-bloco @(temJogo ? "dia-com-jogo" : "")"
+                         title="@ObterNomeDiaSemana(dataCorrente)"
+                         style="cursor: pointer; border: 1px solid #f0f0f0; min-height: 50px;"
+                         @onclick="() => AbrirModalClassificacao(dataCorrente)">
+
+                        <span class="fw-bold">@diaLoop</span>
+
+                        @if (temJogo)
+                        {
+                            <small class="text-success d-block" style="font-size: 0.6rem;">⚽ JOGOS</small>}
+                    </div>}}
+        </div>
+
+
+
+    </div> }
+else
+{
+    <div class="text-center p-5">
+        <div class="spinner-border text-success" role="status"></div>
+        <p class="mt-2">Carregando calendário da temporada...</p>
+    </div>}
+
+@if (exibirModalClassificacao)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.7); z-index: 1050;">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-trophy me-2 text-warning"></i>
+                        Classificação em @dataParaCalculo.ToShortDateString() (@anoSelecionado)
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="FecharModal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 tabela-snapshot">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th style="width: 50px;">POS</th>
+                                    <th class="col-time">CLUBE</th>
+                                    <th>P</th>
+                                    <th>J</th>
+                                    <th>V</th>
+                                    <th>E</th>
+                                    <th>D</th>
+                                    <th>GP</th>
+                                    <th>GC</th>
+                                    <th>SG</th>
+                                    <th>%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{ int pos = 1; }
+                                @foreach (var time in tabelaSnapshot)
+                                {
+                                    string classePosicao = pos <= 4 ? "pos-g4" : (pos >= 17 ? "pos-z4" : (pos <= 12 ? "pos-sula" : ""));
+                                <tr class="@classePosicao">
+                                    <td class="fw-bold">@pos<span>º</span></td>
+                                    <td class="col-time">
+                                        <img src="img/escudos/@(time.Nome).png" width="25" class="me-2" />
+                                        <span>@time.Nome</span>
+                                    </td>
+                                    <td class="table-primary fw-bold text-primary">@time.Pontos</td>
+                                    <td>@time.Jogos</td>
+                                    <td>@time.Vitorias</td>
+                                    <td>@time.Empates</td>
+                                    <td>@time.Derrotas</td>
+                                    <td>@time.GolsFeitos</td>
+                                    <td>@time.GolsSofridos</td>
+                                    <td class="@(time.Saldo > 0 ? "text-success" : (time.Saldo < 0 ? "text-danger" : ""))">
+                                        @(time.Saldo > 0 ? "+" : "")@time.Saldo
+                                    </td>
+                                    <td class="small text-muted">@time.Aproveitamento%</td>
+                                </tr>
+                                    pos++;
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light small text-muted">
+                    <div class="me-auto">
+                        <span class="badge bg-success me-2">G4 - Libertadores</span>
+                        <span class="badge bg-primary me-2">Sula</span>
+                        <span class="badge bg-danger">Z4 - Rebaixamento</span>
+                    </div>
+                    <span>* Cálculo baseado em resultados oficiais até a data selecionada.</span>
+                </div>
+            </div>
+        </div>
+    </div>}
+
+
+@code {
+
+    private int mesExibido; // Será definido pelo primeiro jogo
+    private int mesInicial;
+    private int mesFinal;
+    private DateTime? primeiroJogoData;
+    private DateTime? ultimoJogoData;
+    private int anoSelecionado = 2024;
+    private List<DateTime> diasComJogo = new(); // Adicione esta linha
+    private List<Jogo> todosJogosTemporada = new();
+    private bool exibirModalClassificacao = false;
+    private DateTime dataParaCalculo;
+    private List<LinhaTabela> tabelaSnapshot = new(); // Lista que receberá os pontos calculados
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarCalendario();
+    }
+
+    private async Task CarregarCalendario()
+    {
+        var client = ClientFactory.CreateClient("BrasileiraoAPI");
+        todosJogosTemporada = await client.GetFromJsonAsync<List<Jogo>>($"api/jogos?ano={anoSelecionado}");
+
+        if (todosJogosTemporada != null && todosJogosTemporada.Any())
+        {
+            // 1. Pega a data exata do primeiro e do último jogo do ano
+            primeiroJogoData = todosJogosTemporada.Min(j => j.DataJogo);
+            ultimoJogoData = todosJogosTemporada.Max(j => j.DataJogo);
+
+            // 2. Define os limites de navegação do calendário
+            mesInicial = primeiroJogoData.Value.Month;
+            mesFinal = ultimoJogoData.Value.Month;
+
+            // 3. Define o mês que a tela mostra ao carregar (O início da guerra!)
+            mesExibido = mesInicial;
+
+            // 4. Mapeia os dias que têm "bolinha" no calendário
+            diasComJogo = todosJogosTemporada.Select(j => j.DataJogo.Date).Distinct().ToList();
+
+            StateHasChanged(); // Força a atualização da tela
+        }
+
+    }
+
+    private string NomeMes(int mes)
+    {
+        return System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(mes).ToUpper();
+    }
+
+    private void MudarMes(int variacao)
+    {
+        // Soma ou subtrai o mês (1 ou -1)
+        int novoMes = mesExibido + variacao;
+
+        // Trava a navegação entre o primeiro e o último mês da temporada
+        if (novoMes >= mesInicial && novoMes <= mesFinal)
+        {
+            mesExibido = novoMes;
+        }
+    }
+
+    private void ProcessarClassificacao(DateTime dataCorte)
+    {
+        // 1. Criamos um dicionário para acumular os dados por time
+        var dicionarioTabela = new Dictionary<string, LinhaTabela>();
+
+        // 2. Filtramos apenas os jogos que já aconteceram até a data selecionada (dentro do mesmo ano)
+        // USAR .Date EM AMBOS OS LADOS É VITAL
+        var jogosAteData = todosJogosTemporada
+            .Where(j => j.DataJogo.Date <= dataCorte.Date && j.ano == anoSelecionado)
+            .ToList();
+
+        //var jogosAteData = todosJogosTemporada
+        //.Where(j => j.DataJogo.Date <= dataCorte.Date)
+        //.ToList();
+
+        Console.WriteLine($"DEBUG - Data Corte: {dataCorte.Date}");
+        Console.WriteLine($"DEBUG - Jogos na lista total: {todosJogosTemporada?.Count}");
+        Console.WriteLine($"DEBUG - Jogos filtrados (sem trava de ano): {jogosAteData.Count}");
+
+        if (!jogosAteData.Any()) return;
+
+        foreach (var jogo in jogosAteData)
+        {
+            // Garante que os dois times existam no dicionário
+            if (!dicionarioTabela.ContainsKey(jogo.TimeMandante)) dicionarioTabela[jogo.TimeMandante] = new LinhaTabela { Nome = jogo.TimeMandante };
+            if (!dicionarioTabela.ContainsKey(jogo.TimeVisitante)) dicionarioTabela[jogo.TimeVisitante] = new LinhaTabela { Nome = jogo.TimeVisitante };
+
+            var mandante = dicionarioTabela[jogo.TimeMandante];
+            var visitante = dicionarioTabela[jogo.TimeVisitante];
+
+            // Atualiza Gols e Jogos
+            mandante.Jogos++;
+            visitante.Jogos++;
+            mandante.GolsFeitos += jogo.GolsMandante;
+            mandante.GolsSofridos += jogo.GolsVisitante;
+            visitante.GolsFeitos += jogo.GolsVisitante;
+            visitante.GolsSofridos += jogo.GolsMandante;
+
+            // Regra de Pontuação (3, 1 ou 0)
+            if (jogo.GolsMandante > jogo.GolsVisitante)
+            {
+                mandante.Vitorias++;
+                visitante.Derrotas++;
+            }
+            else if (jogo.GolsMandante < jogo.GolsVisitante)
+            {
+                visitante.Vitorias++;
+                mandante.Derrotas++;
+            }
+            else
+            {
+                mandante.Empates++;
+                visitante.Empates++;
+            }
+        }
+
+        // 3. Converte o dicionário em lista e ORDENA (Pontos > Vitórias > Saldo > Gols Pro)
+        tabelaSnapshot = dicionarioTabela.Values
+            .OrderByDescending(t => t.Pontos)
+            .ThenByDescending(t => t.Vitorias)
+            .ThenByDescending(t => t.Saldo)
+            .ThenByDescending(t => t.GolsFeitos)
+            .ToList();
+
+        Console.WriteLine($"Tabela calculada com {tabelaSnapshot.Count} times.");
+    }
+
+    private void AbrirModalClassificacao(DateTime dataSelecionada)
+    {
+        dataParaCalculo = dataSelecionada;
+        ProcessarClassificacao(dataSelecionada); // Chama o motor aqui!
+        exibirModalClassificacao = true;
+
+        // OBRIGATÓRIO: Avisa o Blazor que a lista 'tabelaSnapshot' mudou!
+        this.StateHasChanged();
+    }
+
+    private void FecharModal()
+    {
+        exibirModalClassificacao = false;
+    }
+
+    private string ObterNomeDiaSemana(DateTime data)
+    {
+        // Retorna "domingo", "segunda-feira", etc.
+        string dia = data.ToString("dddd", new System.Globalization.CultureInfo("pt-BR"));
+        return char.ToUpper(dia[0]) + dia.Substring(1); // Deixa a primeira letra Maiúscula
+    }
+
+    private async Task MudarTemporada(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int novoAno))
+        {
+            anoSelecionado = novoAno;
+
+            // Limpamos os dados antigos para evitar "lixo" visual durante a carga
+            todosJogosTemporada = new();
+            diasComJogo = new();
+            mesExibido = 0; // Isso faz o spinner de "Carregando" aparecer no HTML
+
+            await CarregarCalendario();
+            StateHasChanged();
+        }
+    }
+
+}
