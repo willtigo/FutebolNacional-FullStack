@@ -20,5 +20,6 @@ namespace FutebolNacional.Models
         public double Aproveitamento => Jogos > 0
         ? Math.Round((double)Pontos / (Jogos * 3) * 100, 1)
     :   0;
+        public List<string> UltimaForma { get; set; } = new();
     }
 }

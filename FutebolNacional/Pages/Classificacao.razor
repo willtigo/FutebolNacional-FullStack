@@ -1,6 +1,7 @@
 ﻿@page "/classificacao"
 @using FutebolNacional.Models
 @inject IHttpClientFactory ClientFactory
+@inject IJSRuntime JS
 
 <style>
     .grid-calendario {
@@ -120,6 +121,27 @@
         text-align: left !important;
         min-width: 180px;
     }
+
+    .dot-forma {
+        height: 12px;
+        width: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 3px;
+    }
+
+    .bg-v {
+        background-color: #28a745;
+    }
+    /* Verde - Vitória */
+    .bg-e {
+        background-color: #ffc107;
+    }
+    /* Amarelo - Empate */
+    .bg-d {
+        background-color: #dc3545;
+    }
+    /* Vermelho - Derrota */
 </style>
 
 <div class="d-flex align-items-center justify-content-center bg-light p-4 mb-4 rounded shadow-sm"
@@ -226,6 +248,7 @@ else
                                     <th>GC</th>
                                     <th>SG</th>
                                     <th>%</th>
+                                    <th>Ultimas 5</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -233,11 +256,13 @@ else
                                 @foreach (var time in tabelaSnapshot)
                                 {
                                     string classePosicao = pos <= 4 ? "pos-g4" : (pos >= 17 ? "pos-z4" : (pos <= 12 ? "pos-sula" : ""));
-                                <tr class="@classePosicao">
+                                <tr class="@classePosicao" @onclick="() => MostrarGraficoTime(time.Nome)" style="cursor: pointer; transition: background 0.2s;">
                                     <td class="fw-bold">@pos<span>º</span></td>
                                     <td class="col-time">
                                         <img src="img/escudos/@(time.Nome).png" width="25" class="me-2" />
-                                        <span>@time.Nome</span>
+                                        <span class="@(time.Nome == timeSelecionado ? "text-success fw-bold" : "")">
+                                            @time.Nome
+                                        </span>
                                     </td>
                                     <td class="table-primary fw-bold text-primary">@time.Pontos</td>
                                     <td>@time.Jogos</td>
@@ -250,11 +275,35 @@ else
                                         @(time.Saldo > 0 ? "+" : "")@time.Saldo
                                     </td>
                                     <td class="small text-muted">@time.Aproveitamento%</td>
+                                    <td>
+                                        <div class="d-flex justify-content-center">
+                                            @foreach (var resultado in time.UltimaForma)
+                                            {
+                                                <span class="dot-forma bg-@resultado.ToLower()" title="@resultado"></span>
+                                            }
+                                        </div>
+                                    </td>
                                 </tr>
                                     pos++;
                                 }
                             </tbody>
                         </table>
+                        <!-- Seção do Gráfico de Performance -->
+                        <div class="mt-4 p-3 bg-light rounded border">
+                            <h6 class="fw-bold mb-3 text-center">
+                                <i class="fas fa-chart-line me-2 text-success"></i>
+                                Evolução do Aproveitamento: @timeSelecionado (%)
+                            </h6>
+
+                            <div style="height: 300px; width: 100%;">
+                                <canvas id="canvasGrafico"></canvas>
+                            </div>
+
+                            <div class="text-center mt-2 small text-muted">
+                                <span class="me-3"><i class="fas fa-minus text-success"></i> Temporada @anoSelecionado</span>
+                                <span><i class="fas fa-ellipsis-h text-secondary"></i> Temporada @(anoSelecionado - 1)</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light small text-muted">
@@ -283,8 +332,8 @@ else
     private bool exibirModalClassificacao = false;
     private DateTime dataParaCalculo;
     private List<LinhaTabela> tabelaSnapshot = new(); // Lista que receberá os pontos calculados
-
-
+    private List<Jogo> todosJogosAnoAnterior = new();
+    private string timeSelecionado = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -345,9 +394,6 @@ else
             .Where(j => j.DataJogo.Date <= dataCorte.Date && j.ano == anoSelecionado)
             .ToList();
 
-        //var jogosAteData = todosJogosTemporada
-        //.Where(j => j.DataJogo.Date <= dataCorte.Date)
-        //.ToList();
 
         Console.WriteLine($"DEBUG - Data Corte: {dataCorte.Date}");
         Console.WriteLine($"DEBUG - Jogos na lista total: {todosJogosTemporada?.Count}");
@@ -388,6 +434,7 @@ else
                 mandante.Empates++;
                 visitante.Empates++;
             }
+
         }
 
         // 3. Converte o dicionário em lista e ORDENA (Pontos > Vitórias > Saldo > Gols Pro)
@@ -398,18 +445,69 @@ else
             .ThenByDescending(t => t.GolsFeitos)
             .ToList();
 
+        foreach (var time in dicionarioTabela.Values)
+        {
+            var ultimosJogos = todosJogosTemporada
+                .Where(j => (j.TimeMandante == time.Nome || j.TimeVisitante == time.Nome) && j.DataJogo.Date <= dataParaCalculo.Date)
+                .OrderByDescending(j => j.DataJogo)
+                .Take(5)
+                .ToList();
+
+            // MUDAMOS 'jogo' PARA 'partida' AQUI:
+            foreach (var partida in ultimosJogos)
+            {
+                bool isMandante = partida.TimeMandante == time.Nome;
+                int golsFeitos = isMandante ? partida.GolsMandante : partida.GolsVisitante;
+                int golsSofridos = isMandante ? partida.GolsVisitante : partida.GolsMandante;
+
+                if (golsFeitos > golsSofridos) time.UltimaForma.Add("V");
+                else if (golsFeitos == golsSofridos) time.UltimaForma.Add("E");
+                else time.UltimaForma.Add("D");
+            }
+        }
+
+
         Console.WriteLine($"Tabela calculada com {tabelaSnapshot.Count} times.");
     }
 
-    private void AbrirModalClassificacao(DateTime dataSelecionada)
+    //private async Task AbrirModalClassificacao(DateTime dataSelecionada)
+    //{
+    //    dataParaCalculo = dataSelecionada;
+    //    ProcessarClassificacao(dataSelecionada); // Chama o motor aqui!
+    //    exibirModalClassificacao = true;
+
+    //    // Seleciona o líder por padrão para o gráfico inicial
+    //    if (tabelaSnapshot.Any())
+    //    {
+    //        await MostrarGraficoTime(tabelaSnapshot.First().Nome);
+    //    }
+
+
+    //    // OBRIGATÓRIO: Avisa o Blazor que a lista 'tabelaSnapshot' mudou!
+    //    this.StateHasChanged();
+    //}
+
+    private async Task AbrirModalClassificacao(DateTime dataSelecionada)
     {
         dataParaCalculo = dataSelecionada;
-        ProcessarClassificacao(dataSelecionada); // Chama o motor aqui!
         exibirModalClassificacao = true;
 
-        // OBRIGATÓRIO: Avisa o Blazor que a lista 'tabelaSnapshot' mudou!
-        this.StateHasChanged();
+        // 1. Processa a tabela primeiro (Síncrono)
+        ProcessarClassificacao(dataSelecionada);
+
+        // 2. Avisa o Blazor para renderizar o HTML do Modal e da Tabela
+        StateHasChanged();
+
+        // 3. Pequena pausa para o navegador "desenhar" o Canvas na tela
+        await Task.Delay(150);
+
+        // 4. Agora sim, com o Canvas pronto, chamamos o gráfico do 1º colocado
+        if (tabelaSnapshot.Any())
+        {
+            await MostrarGraficoTime(tabelaSnapshot.First().Nome);
+        }
     }
+
 
     private void FecharModal()
     {
@@ -436,6 +534,118 @@ else
 
             await CarregarCalendario();
             StateHasChanged();
+        }
+    }
+
+    private async Task GerarDadosGrafico(string nomeTime, DateTime dataCorte)
+    {
+        // Filtramos os jogos do time nos dois anos até a data de corte
+        var jogosAnoAtual = todosJogosTemporada
+            .Where(j => (j.TimeMandante == nomeTime || j.TimeVisitante == nomeTime) && j.DataJogo <= dataCorte)
+            .OrderBy(j => j.DataJogo).ToList();
+
+        // Aqui você precisará buscar os jogos do ano anterior (Ex: 2023) via API se não estiverem na memória
+        var jogosAnoAnterior = todosJogosAnoAnterior
+            .Where(j => (j.TimeMandante == nomeTime || j.TimeVisitante == nomeTime) && j.DataJogo <= dataCorte.AddYears(-1))
+            .OrderBy(j => j.DataJogo).ToList();
+
+        // Calculamos o aproveitamento acumulado jogo a jogo para criar a "escada" de performance
+        var labels = jogosAnoAtual.Select(j => j.DataJogo.ToString("dd/MM")).ToArray();
+        var dadosAtual = CalcularEvolucaoAproveitamento(jogosAnoAtual, nomeTime);
+        var dadosAnterior = CalcularEvolucaoAproveitamento(jogosAnoAnterior, nomeTime);
+
+        // Chamamos o JavaScript para desenhar
+        await JS.InvokeVoidAsync("CriarGraficoComparativo", "canvasGrafico", labels, dadosAtual, dadosAnterior);
+    }
+
+    private List<double> CalcularEvolucaoAproveitamento(List<Jogo> jogos, string nomeTime)
+    {
+        int pontosAcumulados = 0;
+        List<double> evolucao = new();
+
+        // Loop para calcular o % de aproveitamento a cada rodada/data
+        for (int i = 0; i < jogos.Count; i++)
+        {
+            var j = jogos[i];
+            bool isMandante = j.TimeMandante == nomeTime;
+
+            // Lógica de pontos: 3 para vitória, 1 para empate
+            int golsFeitos = isMandante ? j.GolsMandante : j.GolsVisitante;
+            int golsSofridos = isMandante ? j.GolsVisitante : j.GolsMandante;
+
+            if (golsFeitos > golsSofridos) pontosAcumulados += 3;
+            else if (golsFeitos == golsSofridos) pontosAcumulados += 1;
+
+            // Cálculo do % baseado nos pontos possíveis até aquele momento (i+1 jogos * 3)
+            double porc = Math.Round((double)pontosAcumulados / ((i + 1) * 3) * 100, 1);
+            evolucao.Add(porc);
+        }
+        return evolucao;
+    }
+
+    private async Task CarregarDadosComparativos()
+    {
+        var client = ClientFactory.CreateClient("BrasileiraoAPI");
+
+        // Ano anterior ao selecionado (ex: se selecionou 2024, busca 2023)
+        int anoAnterior = anoSelecionado - 1;
+
+        var resposta = await client.GetFromJsonAsync<List<Jogo>>($"api/jogos?ano={anoAnterior}");
+
+        if (resposta != null)
+        {
+            todosJogosAnoAnterior = resposta;
+            Console.WriteLine($"Dados de {anoAnterior} carregados para comparação.");
+        }
+    }
+
+    private async Task MostrarGraficoTime(string nomeTime)
+    {
+        timeSelecionado = nomeTime;
+
+        // 1. Verifica se temos os dados de 2023. Se não, busca.
+        if (todosJogosAnoAnterior == null || !todosJogosAnoAnterior.Any())
+        {
+            await CarregarDadosAnoAnterior();
+        }
+
+        // 2. Notifica o Blazor para destacar o nome do time na tabela
+        StateHasChanged();
+
+        // 3. Processa e envia para o JavaScript
+        // Adicionamos um pequeno try/catch aqui para o JS não quebrar o C#
+        try
+        {
+            await GerarDadosGrafico(nomeTime, dataParaCalculo);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Erro ao atualizar gráfico: " + ex.Message);
+        }
+    }
+
+
+    private async Task CarregarDadosAnoAnterior()
+    {
+        try
+        {
+            var client = ClientFactory.CreateClient("BrasileiraoAPI");
+            int anoAnterior = anoSelecionado - 1;
+
+            Console.WriteLine($"Buscando dados históricos de {anoAnterior}...");
+
+            // Chamada para a sua API existente, apenas mudando o parâmetro do ano
+            var resposta = await client.GetFromJsonAsync<List<Jogo>>($"api/jogos?ano={anoAnterior}");
+
+            if (resposta != null)
+            {
+                todosJogosAnoAnterior = resposta;
+                Console.WriteLine($"Sucesso: {todosJogosAnoAnterior.Count} jogos de {anoAnterior} carregados para comparação.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao carregar ano anterior: {ex.Message}");
         }
     }
 

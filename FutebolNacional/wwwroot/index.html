@@ -7,8 +7,7 @@
     <title>FutebolNacional</title>
     <base href="/" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-
+    
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link href="css/app.css" rel="stylesheet" />
     <link href="FutebolNacional.styles.css" rel="stylesheet" />
@@ -23,8 +22,67 @@
         <a href="" class="reload">Reload</a>
         <a class="dismiss">🗙</a>
     </div>
+    <script src="js/chart.min.js"></script>
+    <script>
+        window.CriarGraficoComparativo = async (canvasId, labels, dadosAtual, dadosAnterior) => {
+            // 1. Aguarda a biblioteca carregar
+            let tentativas = 0;
+            while (typeof Chart === 'undefined' && tentativas < 20) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                tentativas++;
+            }
+
+            // 2. Busca o elemento Canvas no HTML
+            const elementoCanvas = document.getElementById(canvasId);
+            if (!elementoCanvas) {
+                console.error("Erro: Elemento canvas não encontrado!");
+                return;
+            }
+
+            // 3. Define o contexto (AQUI ESTAVA O ERRO, faltava o 'const')
+            const ctx = elementoCanvas.getContext('2d');
+
+            // 4. Limpa gráfico anterior se existir
+            if (window.meuGrafico instanceof Chart) {
+                window.meuGrafico.destroy();
+            }
+
+            // 5. Cria o novo gráfico
+            window.meuGrafico = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Temporada Atual (%)',
+                            data: dadosAtual,
+                            borderColor: '#198754',
+                            backgroundColor: 'rgba(25, 135, 84, 0.2)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Temporada Anterior (%)',
+                            data: dadosAnterior,
+                            borderColor: '#adb5bd',
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { min: 0, max: 100, title: { display: true, text: 'Aproveitamento (%)' } }
+                    }
+                }
+            });
+        };
+    </script>
     <script src="_framework/blazor.webassembly.js"></script>
-    <script src="https://cdn.jsdelivr.net"></script>
+
 </body>
 
 </html>
