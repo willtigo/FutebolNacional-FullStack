@@ -426,64 +426,6 @@ else
 
 @if (exibirModal && jogoSelecionado != null)
     {
-<!--<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.85);">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 bg-transparent">-->
-
- <!-- 1. Banner Superior -->
-<!--<div class="modal-banner" style="background-image: url('img/estadios/@(jogoSelecionado.Estadio).jpg'), url('img/estadios/default.jpg'); border-radius: 15px 15px 0 0;">
-    <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" @onclick="FecharModal"></button>
-    <div class="modal-banner-overlay text-center pb-5">
-        <small class="text-uppercase fw-bold" style="letter-spacing: 2px;">
-            <i class="fas fa-map-marker-alt"></i> @jogoSelecionado.Estadio
-        </small>
-    </div>
-</div>-->
-
- <!-- 2. Bloco do Placar (Centralizado) -->
-<!--<div class="container py-3 shadow placar-modal mx-auto w-75 text-center">
-    <div class="row align-items-center">
-        <div class="col-4 text-end">
-            <span class="fw-bold d-block d-sm-inline">@jogoSelecionado.TimeMandante</span>
-            <img src="img/escudos/@(jogoSelecionado.TimeMandante).png" width="45" class="ms-2" />
-        </div>
-        <div class="col-4">
-            <h2 class="fw-bold mb-0">@jogoSelecionado.GolsMandante x @jogoSelecionado.GolsVisitante</h2>
-        </div>
-        <div class="col-4 text-start">
-            <img src="img/escudos/@(jogoSelecionado.TimeVisitante).png" width="45" class="me-2" />
-            <span class="fw-bold d-block d-sm-inline">@jogoSelecionado.TimeVisitante</span>
-        </div>
-    </div>
-</div>-->
-
- <!-- 3. Timeline de Eventos -->
-<!--<div class="modal-body bg-white rounded-bottom p-4" style="max-height: 400px; overflow-y: auto;">
-                @if (eventosPartida != null)
-                {
-                    <div class="timeline-container">
-                        @foreach (var ev in eventosPartida)
-                        {
-                            bool isMandante = ev.TimeNome == jogoSelecionado.TimeMandante;
-                            <div class="evento-row @(isMandante ? "evento-mandante" : "evento-visitante")">
-
-                                <div class="minuto-central">@ev.Minuto'</div>
-
-                                <div class="evento-content">
-                                    @if (ev.Tipo == "Goal")
-                                    {<i class="fas fa-futbol mx-1 text-success"></i> }
-                                    else if (ev.Tipo == "Card")
-                                    { <i class="fas fa-id-card mx-1 @(ev.Detalhe.Contains("Yellow") ? "text-warning" : "text-danger")"></i>}
-
-                                    <strong>@ev.Jogador</strong>
-                                    <div class="text-muted small">@ev.Detalhe</div>
-                                </div>
-                            </div>}
-                    </div>}
-            </div>
-        </div>
-    </div>
-</div>-->
 
 <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.85);">
     <div class="modal-dialog modal-lg modal-dialog-centered">
