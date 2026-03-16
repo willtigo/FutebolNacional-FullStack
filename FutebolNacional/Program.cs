@@ -19,7 +19,7 @@ namespace FutebolNacional
 
             // Alternativa mais profissional:
             builder.Services.AddHttpClient("BrasileiraoAPI", client => {
-                client.BaseAddress = new Uri("http://localhost:8080/");
+                client.BaseAddress = new Uri("http://192.168.0.21:8080/");
             });
 
             await builder.Build().RunAsync();

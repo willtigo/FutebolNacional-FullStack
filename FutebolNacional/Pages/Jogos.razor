@@ -364,7 +364,7 @@ else if (!jogosExibidos.Any())
     </div> }
 else
 {
-    <table class="table table-striped table-hover mt-3" style="table-layout: fixed; width: 100%;">
+    <table class="table table-striped table-hover mt-3 table-sm" style="table-layout: fixed; width: 100%;">
         <thead style="background-color: @corDestaque; color: white; transition: background-color 0.5s;">
             <tr>
                 <th style="width: 20%;">Data</th>
@@ -379,37 +379,38 @@ else
                 @foreach (var jogo in jogosExibidos)
                 {
                     <tr @onclick="() => AbrirModal(jogo)" style="cursor: pointer;">
-                        <td style="vertical-align: middle; overflow: hidden; white-space: nowrap;">
-                            <b>@jogo.DataJogo.ToShortDateString()</b>
+                        <!-- Data: Largura mínima fixa -->
+                        <td style="vertical-align: middle; width: 15%; padding: 8px 2px; border-right: 1px solid #eee;">
+                            <b style="font-size: 0.75rem;" class="text-muted">@jogo.DataJogo.ToString("dd/MM/yyyy")</b>
                         </td>
 
-                        @* Coluna do Mandante - Estabilizada com Sigla *@
-                        <td class="text-right" style="vertical-align: middle;">
-                            <span class="fw-bold" title="@jogo.TimeMandante"><b>@GerarSigla(jogo.TimeMandante)</b></span>
-                            <img src="img/escudos/@(jogo.TimeMandante).png"
-                                 width="30" height="30"
-                                 style="margin-left: 10px;"
-                                 onerror="this.src='img/escudos/default.png';" />
+                        <!-- Mandante: Alinha tudo para a DIREITA (em direção ao placar) -->
+                        <td style="vertical-align: middle; width: 30%; text-align: right; padding: 8px 5px;">
+                            <div class="d-flex align-items-center justify-content-end">
+                                <span class="fw-bold me-2" style="font-size: 0.9rem;">@GerarSigla(jogo.TimeMandante)</span>
+                                <img src="img/escudos/@(jogo.TimeMandante).png" width="25" height="25"
+                                     onerror="this.src='img/escudos/default.png';" />
+                            </div>
                         </td>
 
-                        @* Coluna do Placar *@
-                        <td class="text-center" style="vertical-align: middle;">
+                        <!-- Placar: Centralizado e com largura protegida -->
+                        <td style="vertical-align: middle; width: 25%; text-align: center; padding: 8px 0;">
                             <span class="badge rounded-pill @GetPlacarColor(jogo.GolsMandante, jogo.GolsVisitante)"
-                                  style="font-size: 1.1rem; padding: 8px 15px; min-width: 80px;">
+                                  style="font-size: 0.9rem; padding: 6px 12px; min-width: 70px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                 @jogo.GolsMandante x @jogo.GolsVisitante
                             </span>
                         </td>
 
-                        @* Coluna do Visitante - Estabilizada com Sigla *@
-                        <td class="text-left" style="vertical-align: middle;">
-                            <img src="img/escudos/@(jogo.TimeVisitante).png"
-                                 width="30" height="30"
-                                 style="margin-right: 10px;"
-                                 onerror="this.src='img/escudos/default.png';" />
-                            <span class="fw-bold" title="@jogo.TimeVisitante"><b>@GerarSigla(jogo.TimeVisitante)</b></span>
+                        <!-- Visitante: Alinha tudo para a ESQUERDA (em direção ao placar) -->
+                        <td style="vertical-align: middle; width: 30%; text-align: left; padding: 8px 5px;">
+                            <div class="d-flex align-items-center justify-content-start">
+                                <img src="img/escudos/@(jogo.TimeVisitante).png" width="25" height="25"
+                                     onerror="this.src='img/escudos/default.png';" />
+                                <span class="fw-bold ms-2" style="font-size: 0.9rem;">@GerarSigla(jogo.TimeVisitante)</span>
+                            </div>
                         </td>
                     </tr>
-                }}
+                                        }}
         </tbody>
     </table>
 
@@ -484,8 +485,6 @@ else
             </div>
         </div>}
 
-
-}
 
 }
 
