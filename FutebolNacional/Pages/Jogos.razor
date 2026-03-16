@@ -313,19 +313,19 @@
 
                         @if (listaClubes != null)
                         {
-                            @foreach (var time in listaClubes)
+                        @foreach (var time in listaClubes)
                             {
-                                <img src="img/escudos/@(time).png"
-                                     title="@time"
-                                     class="escudo-filtro @(timeSelecionado == time ? "escudo-ativo" : "")"
-                                     @onclick="() => SelecionarTime(time)"
-                                     onerror="this.src='img/escudos/default.png';" />
+                        <img src="img/escudos/@(time).png"
+                             title="@time"
+                             class="escudo-filtro @(timeSelecionado == time ? "escudo-ativo" : "")"
+                             @onclick="() => SelecionarTime(time)"
+                             onerror="this.src='img/escudos/default.png';" />
                             }
                         }
                     </div>
                     @if (!string.IsNullOrEmpty(timeSelecionado))
                     {
-                        <div class="mt-2 text-success fw-bold">Exibindo jogos de: @timeSelecionado</div>
+                    <div class="mt-2 text-success fw-bold">Exibindo jogos de: @timeSelecionado</div>
                     }
                 </div>
             </div>
@@ -336,154 +336,229 @@
 
 @if (jogosExibidos == null)
 {
-    <table class="table mt-3">
-        <thead>
-            <tr class="thead-dark">
-                <th>Data</th>
-                <th>Mandante</th>
-                <th>Placar</th>
-                <th>Visitante</th>
-            </tr>
-        </thead>
-        <tbody>
-            @for (int i = 0; i < 10; i++)
+<table class="table mt-3">
+    <thead>
+        <tr class="thead-dark">
+            <th>Data</th>
+            <th>Mandante</th>
+            <th>Placar</th>
+            <th>Visitante</th>
+        </tr>
+    </thead>
+    <tbody>
+        @for (int i = 0; i < 10; i++)
             {
-                <tr>
-                    <td><div class="skeleton" style="width: 80px;"></div></td>
-                    <td><div class="skeleton"></div></td>
-                    <td class="text-center"><div class="skeleton" style="width: 50px;"></div></td>
-                    <td><div class="skeleton"></div></td>
-                </tr>
+        <tr>
+            <td><div class="skeleton" style="width: 80px;"></div></td>
+            <td><div class="skeleton"></div></td>
+            <td class="text-center"><div class="skeleton" style="width: 50px;"></div></td>
+            <td><div class="skeleton"></div></td>
+        </tr>
             }
-        </tbody>
-    </table> }
+    </tbody>
+</table> }
 else if (!jogosExibidos.Any())
 {
-    <div class="alert alert-warning text-center">
-        Nenhum jogo encontrado para a <strong>Rodada @rodadaAtual</strong> em <strong>@anoSelecionado</strong>.
-    </div> }
+<div class="alert alert-warning text-center">
+    Nenhum jogo encontrado para a <strong>Rodada @rodadaAtual</strong> em <strong>@anoSelecionado</strong>.
+</div> }
 else
 {
-    <table class="table table-striped table-hover mt-3 table-sm" style="table-layout: fixed; width: 100%;">
-        <thead style="background-color: @corDestaque; color: white; transition: background-color 0.5s;">
-            <tr>
-                <th style="width: 20%;">Data</th>
-                <th class="text-right" style="width: 30%;">Mandante</th>
-                <th class="text-center" style="width: 20%;">Placar</th>
-                <th class="text-left" style="width: 30%;">Visitante</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (jogosExibidos != null)
+<table class="table table-striped table-hover mt-3 table-sm" style="table-layout: fixed; width: 100%;">
+    <thead style="background-color: @corDestaque; color: white; transition: background-color 0.5s;">
+        <tr>
+            <th style="width: 20%;">Data</th>
+            <th class="text-right" style="width: 30%;">Mandante</th>
+            <th class="text-center" style="width: 20%;">Placar</th>
+            <th class="text-left" style="width: 30%;">Visitante</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (jogosExibidos != null)
             {
-                @foreach (var jogo in jogosExibidos)
+        @foreach (var jogo in jogosExibidos)
                 {
-                    <tr @onclick="() => AbrirModal(jogo)" style="cursor: pointer;">
-                        <!-- Data: Largura mínima fixa -->
-                        <td style="vertical-align: middle; width: 15%; padding: 8px 2px; border-right: 1px solid #eee;">
-                            <b style="font-size: 0.75rem;" class="text-muted">@jogo.DataJogo.ToString("dd/MM/yyyy")</b>
-                        </td>
+        <tr @onclick="() => AbrirModal(jogo)" style="cursor: pointer;">
+            <!-- Data: Largura mínima fixa -->
+            <td style="vertical-align: middle; width: 15%; padding: 8px 2px; border-right: 1px solid #eee;">
+                <b style="font-size: 0.75rem;" class="text-muted">@jogo.DataJogo.ToString("dd/MM/yyyy")</b>
+            </td>
 
-                        <!-- Mandante: Alinha tudo para a DIREITA (em direção ao placar) -->
-                        <td style="vertical-align: middle; width: 30%; text-align: right; padding: 8px 5px;">
-                            <div class="d-flex align-items-center justify-content-end">
-                                <span class="fw-bold me-2" style="font-size: 0.9rem;">@GerarSigla(jogo.TimeMandante)</span>
-                                <img src="img/escudos/@(jogo.TimeMandante).png" width="25" height="25"
-                                     onerror="this.src='img/escudos/default.png';" />
-                            </div>
-                        </td>
+            <!-- Mandante: Alinha tudo para a DIREITA (em direção ao placar) -->
+            <td style="vertical-align: middle; width: 30%; text-align: right; padding: 8px 5px;">
+                <div class="d-flex align-items-center justify-content-end">
+                    <span class="fw-bold me-2" style="font-size: 0.9rem;">@GerarSigla(jogo.TimeMandante)</span>
+                    <img src="img/escudos/@(jogo.TimeMandante).png" width="25" height="25"
+                         onerror="this.src='img/escudos/default.png';" />
+                </div>
+            </td>
 
-                        <!-- Placar: Centralizado e com largura protegida -->
-                        <td style="vertical-align: middle; width: 25%; text-align: center; padding: 8px 0;">
-                            <span class="badge rounded-pill @GetPlacarColor(jogo.GolsMandante, jogo.GolsVisitante)"
-                                  style="font-size: 0.9rem; padding: 6px 12px; min-width: 70px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                @jogo.GolsMandante x @jogo.GolsVisitante
-                            </span>
-                        </td>
+            <!-- Placar: Centralizado e com largura protegida -->
+            <td style="vertical-align: middle; width: 25%; text-align: center; padding: 8px 0;">
+                <span class="badge rounded-pill @GetPlacarColor(jogo.GolsMandante, jogo.GolsVisitante)"
+                      style="font-size: 0.9rem; padding: 6px 12px; min-width: 70px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    @jogo.GolsMandante x @jogo.GolsVisitante
+                </span>
+            </td>
 
-                        <!-- Visitante: Alinha tudo para a ESQUERDA (em direção ao placar) -->
-                        <td style="vertical-align: middle; width: 30%; text-align: left; padding: 8px 5px;">
-                            <div class="d-flex align-items-center justify-content-start">
-                                <img src="img/escudos/@(jogo.TimeVisitante).png" width="25" height="25"
-                                     onerror="this.src='img/escudos/default.png';" />
-                                <span class="fw-bold ms-2" style="font-size: 0.9rem;">@GerarSigla(jogo.TimeVisitante)</span>
-                            </div>
-                        </td>
-                    </tr>
+            <!-- Visitante: Alinha tudo para a ESQUERDA (em direção ao placar) -->
+            <td style="vertical-align: middle; width: 30%; text-align: left; padding: 8px 5px;">
+                <div class="d-flex align-items-center justify-content-start">
+                    <img src="img/escudos/@(jogo.TimeVisitante).png" width="25" height="25"
+                         onerror="this.src='img/escudos/default.png';" />
+                    <span class="fw-bold ms-2" style="font-size: 0.9rem;">@GerarSigla(jogo.TimeVisitante)</span>
+                </div>
+            </td>
+        </tr>
                                         }}
-        </tbody>
-    </table>
+    </tbody>
+</table>
 
-    @if (!string.IsNullOrEmpty(timeSelecionado))
+@if (!string.IsNullOrEmpty(timeSelecionado))
     {
-        <div class="mascote-container d-none d-md-block">
-            <img src="img/mascotes/@(timeSelecionado).png"
-                 alt="Mascote @timeSelecionado"
-                 class="mascote-img"
-                 onerror="this.style.display='none';" />
-        </div>
+<div class="mascote-container d-none d-md-block">
+    <img src="img/mascotes/@(timeSelecionado).png"
+         alt="Mascote @timeSelecionado"
+         class="mascote-img"
+         onerror="this.style.display='none';" />
+</div>
     }
 
-    @if (exibirModal && jogoSelecionado != null)
+@if (exibirModal && jogoSelecionado != null)
     {
-        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.85);">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content border-0 bg-transparent">
+<!--<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.85);">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 bg-transparent">-->
 
-                    <!-- 1. Banner Superior -->
-                    <div class="modal-banner" style="background-image: url('img/estadios/@(jogoSelecionado.Estadio).jpg'), url('img/estadios/default.jpg'); border-radius: 15px 15px 0 0;">
-                        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" @onclick="FecharModal"></button>
-                        <div class="modal-banner-overlay text-center pb-5">
-                            <small class="text-uppercase fw-bold" style="letter-spacing: 2px;">
-                                <i class="fas fa-map-marker-alt"></i> @jogoSelecionado.Estadio
-                            </small>
-                        </div>
-                    </div>
+ <!-- 1. Banner Superior -->
+<!--<div class="modal-banner" style="background-image: url('img/estadios/@(jogoSelecionado.Estadio).jpg'), url('img/estadios/default.jpg'); border-radius: 15px 15px 0 0;">
+    <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" @onclick="FecharModal"></button>
+    <div class="modal-banner-overlay text-center pb-5">
+        <small class="text-uppercase fw-bold" style="letter-spacing: 2px;">
+            <i class="fas fa-map-marker-alt"></i> @jogoSelecionado.Estadio
+        </small>
+    </div>
+</div>-->
 
-                    <!-- 2. Bloco do Placar (Centralizado) -->
-                    <div class="container py-3 shadow placar-modal mx-auto w-75 text-center">
-                        <div class="row align-items-center">
-                            <div class="col-4 text-end">
-                                <span class="fw-bold d-block d-sm-inline">@jogoSelecionado.TimeMandante</span>
-                                <img src="img/escudos/@(jogoSelecionado.TimeMandante).png" width="45" class="ms-2" />
-                            </div>
-                            <div class="col-4">
-                                <h2 class="fw-bold mb-0">@jogoSelecionado.GolsMandante x @jogoSelecionado.GolsVisitante</h2>
-                            </div>
-                            <div class="col-4 text-start">
-                                <img src="img/escudos/@(jogoSelecionado.TimeVisitante).png" width="45" class="me-2" />
-                                <span class="fw-bold d-block d-sm-inline">@jogoSelecionado.TimeVisitante</span>
-                            </div>
-                        </div>
-                    </div>
+ <!-- 2. Bloco do Placar (Centralizado) -->
+<!--<div class="container py-3 shadow placar-modal mx-auto w-75 text-center">
+    <div class="row align-items-center">
+        <div class="col-4 text-end">
+            <span class="fw-bold d-block d-sm-inline">@jogoSelecionado.TimeMandante</span>
+            <img src="img/escudos/@(jogoSelecionado.TimeMandante).png" width="45" class="ms-2" />
+        </div>
+        <div class="col-4">
+            <h2 class="fw-bold mb-0">@jogoSelecionado.GolsMandante x @jogoSelecionado.GolsVisitante</h2>
+        </div>
+        <div class="col-4 text-start">
+            <img src="img/escudos/@(jogoSelecionado.TimeVisitante).png" width="45" class="me-2" />
+            <span class="fw-bold d-block d-sm-inline">@jogoSelecionado.TimeVisitante</span>
+        </div>
+    </div>
+</div>-->
 
-                    <!-- 3. Timeline de Eventos -->
-                    <div class="modal-body bg-white rounded-bottom p-4" style="max-height: 400px; overflow-y: auto;">
-                        @if (eventosPartida != null)
+ <!-- 3. Timeline de Eventos -->
+<!--<div class="modal-body bg-white rounded-bottom p-4" style="max-height: 400px; overflow-y: auto;">
+                @if (eventosPartida != null)
+                {
+                    <div class="timeline-container">
+                        @foreach (var ev in eventosPartida)
                         {
-                            <div class="timeline-container">
-                                @foreach (var ev in eventosPartida)
-                                {
-                                    bool isMandante = ev.TimeNome == jogoSelecionado.TimeMandante;
-                                    <div class="evento-row @(isMandante ? "evento-mandante" : "evento-visitante")">
+                            bool isMandante = ev.TimeNome == jogoSelecionado.TimeMandante;
+                            <div class="evento-row @(isMandante ? "evento-mandante" : "evento-visitante")">
 
-                                        <div class="minuto-central">@ev.Minuto'</div>
+                                <div class="minuto-central">@ev.Minuto'</div>
 
-                                        <div class="evento-content">
-                                            @if (ev.Tipo == "Goal")
-                                            {<i class="fas fa-futbol mx-1 text-success"></i> }
-                                            else if (ev.Tipo == "Card")
-                                            { <i class="fas fa-id-card mx-1 @(ev.Detalhe.Contains("Yellow") ? "text-warning" : "text-danger")"></i>}
+                                <div class="evento-content">
+                                    @if (ev.Tipo == "Goal")
+                                    {<i class="fas fa-futbol mx-1 text-success"></i> }
+                                    else if (ev.Tipo == "Card")
+                                    { <i class="fas fa-id-card mx-1 @(ev.Detalhe.Contains("Yellow") ? "text-warning" : "text-danger")"></i>}
 
-                                            <strong>@ev.Jogador</strong>
-                                            <div class="text-muted small">@ev.Detalhe</div>
-                                        </div>
-                                    </div>}
+                                    <strong>@ev.Jogador</strong>
+                                    <div class="text-muted small">@ev.Detalhe</div>
+                                </div>
                             </div>}
-                    </div>
+                    </div>}
+            </div>
+        </div>
+    </div>
+</div>-->
+
+<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.85);">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 bg-transparent">
+
+            <!-- 1. Banner Superior -->
+            <div class="modal-banner" style="background-image: url('img/estadios/@(jogoSelecionado.Estadio).jpg'), url('img/estadios/default.jpg'); border-radius: 15px 15px 0 0;">
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" @onclick="FecharModal"></button>
+                <div class="modal-banner-overlay text-center pb-5">
+                    <small class="text-uppercase fw-bold" style="letter-spacing: 2px;">
+                        <i class="fas fa-map-marker-alt"></i> @jogoSelecionado.Estadio
+                    </small>
                 </div>
             </div>
-        </div>}
+
+            <!-- 2. Bloco do Placar (Abreviado e Alinhado) -->
+            <div class="container py-3 shadow placar-modal mx-auto w-75 text-center">
+                <div class="d-flex align-items-center justify-content-center">
+
+                    <!-- Mandante -->
+                    <div class="flex-grow-1 text-end d-flex align-items-center justify-content-end">
+                        <span class="fw-bold text-uppercase me-2">
+                            @(jogoSelecionado.TimeMandante.Length >= 3 ? jogoSelecionado.TimeMandante.Substring(0, 3) : jogoSelecionado.TimeMandante)
+                        </span>
+                        <img src="img/escudos/@(jogoSelecionado.TimeMandante).png" width="45" />
+                    </div>
+
+                    <!-- Placar Central -->
+                    <div class="px-3">
+                        <h2 class="fw-bold mb-0 text-nowrap">
+                            @jogoSelecionado.GolsMandante <small class="mx-1">x</small> @jogoSelecionado.GolsVisitante
+                        </h2>
+                    </div>
+
+                    <!-- Visitante -->
+                    <div class="flex-grow-1 text-start d-flex align-items-center justify-content-start">
+                        <img src="img/escudos/@(jogoSelecionado.TimeVisitante).png" width="45" />
+                        <span class="fw-bold text-uppercase ms-2">
+                            @(jogoSelecionado.TimeVisitante.Length >= 3 ? jogoSelecionado.TimeVisitante.Substring(0, 3) : jogoSelecionado.TimeVisitante)
+                        </span>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 3. Timeline de Eventos -->
+            <div class="modal-body bg-white rounded-bottom p-4" style="max-height: 400px; overflow-y: auto;">
+                @if (eventosPartida != null)
+                {
+                <div class="timeline-container">
+                    @foreach (var ev in eventosPartida)
+                        {
+                            bool isMandante = ev.TimeNome == jogoSelecionado.TimeMandante;
+                    <div class="evento-row @(isMandante ? "evento-mandante" : "evento-visitante")">
+
+                        <div class="minuto-central">@ev.Minuto'</div>
+
+                        <div class="evento-content">
+                            @if (ev.Tipo == "Goal")
+                                    {<i class="fas fa-futbol mx-1 text-success"></i> }
+                                    else if (ev.Tipo == "Card")
+                                    { <i class="fas fa-id-card mx-1 @(ev.Detalhe.Contains("Yellow") ? "text-warning" : "text-danger")"></i>}
+
+                            <strong>@ev.Jogador</strong>
+                            <div class="text-muted small">@ev.Detalhe</div>
+                        </div>
+                    </div>}
+                </div>}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+        }
 
 
 }
