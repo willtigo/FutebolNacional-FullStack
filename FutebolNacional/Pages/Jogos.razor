@@ -238,19 +238,26 @@
 </style>
 
 
-<div class="d-flex align-items-center justify-content-center bg-light p-4 mb-4 rounded shadow-sm"
+<div class="d-flex flex-column flex-md-row align-items-center justify-content-center bg-light p-3 p-md-4 mb-4 rounded shadow-sm"
      style="border-left: 8px solid #005c2d; border-right: 8px solid #f9dd16;">
 
+    <!-- Logo: Ajustado o tamanho para mobile e margem responsiva -->
     <img src="img/escudos/brasileiro.png" alt="Logo Brasileirão"
-         style="height: 80px; margin-right: 20px;" />
+         class="mb-3 mb-md-0 me-md-4"
+         style="height: 60px; max-height: 80px; width: auto;" />
 
-    <div class="text-center">
-        <h2 class="fw-bold mb-0" style="color: #004a29; letter-spacing: 1px;">
+    <div class="text-center text-md-start">
+        <h2 class="fw-bold mb-1" style="color: #004a29; letter-spacing: 1px; font-size: calc(1.2rem + 0.6vw);">
             CAMPEONATO BRASILEIRO
         </h2>
-        <span class="badge bg-dark text-white text-uppercase" style="font-size: 0.9rem; letter-spacing: 2px;">
-            Temporadas 2022 • 2023 • 2024
-        </span>
+
+        <!-- Temporadas Dinâmicas -->
+        <div class="d-flex flex-wrap justify-content-center justify-content-md-start">
+            <span class="badge bg-dark text-white text-uppercase" style="font-size: 0.8rem; letter-spacing: 1px; white-space: normal;">
+                Temporadas @(string.IsNullOrEmpty(temporadasDisponiveisStr) ? "..." : temporadasDisponiveisStr+" - "+tituloPagina)
+                @*Temporadas 2022 • 2023 • 2024*@
+            </span>
+        </div>
     </div>
 </div>
 
@@ -508,6 +515,8 @@ else
 
 @code { // Mantemos suas variáveis originais
     private List<Jogo> jogos; // Lista completa do ano (vinda da API)
+    private string temporadasDisponiveisStr = ""; // Variável para o Banner
+    private string tituloPagina = "Jogos";
     private List<Jogo> jogosExibidos; // Lista filtrada da rodada atual (exibida no HTML)
     private string anoSelecionado = "2024"; // Iniciando com 2024
     private int rodadaAtual = 1;
@@ -523,34 +532,38 @@ else
     // Dicionário simples com as cores principais dos clubes
     private Dictionary<string, string> coresClubes = new()
     {
-            { "Atletico Paranaense", "#D50024" },
-            { "Atletico Goianiense", "#000000" },
-            { "Atletico-MG", "#231F20" },
-            { "Bahia", "#0067B2" },
-            { "Botafogo", "#000000" },
-            { "RB Bragantino", "#E11A27" },
-            { "Corinthians", "#131313" },
-            { "Criciuma", "#F8D116" }, // Dica: Aqui o texto pode precisar ser preto
-            { "Coritiba", "#006437" },
-            { "Cruzeiro", "#003399" },
-            { "Cuiaba", "#006225" },
-            { "Flamengo", "#C40000" },
-            { "Fluminense", "#820E2D" },
-            { "Fortaleza EC", "#103E91" },
-            { "Gremio", "#0D80BF" },
-            { "Internacional", "#E20E0E" },
-            { "Juventude", "#008144" },
-            { "Palmeiras", "#006437" },
-            { "Santos", "#1D1D1B" },
-            { "Sao Paulo", "#FE0000" },
-            { "Vasco DA Gama", "#000000" },
-            { "Vitoria", "#BE151B" }
-            // Adicione os demais conforme necessário
-        };
+        { "Atletico Paranaense", "#D50024" },
+        { "Atletico Goianiense", "#000000" },
+        { "Atletico-MG", "#231F20" },
+        { "Bahia", "#0067B2" },
+        { "Botafogo", "#000000" },
+        { "RB Bragantino", "#E11A27" },
+        { "Corinthians", "#131313" },
+        { "Criciuma", "#F8D116" }, // Dica: Aqui o texto pode precisar ser preto
+        { "Coritiba", "#006437" },
+        { "Cruzeiro", "#003399" },
+        { "Cuiaba", "#006225" },
+        { "Flamengo", "#C40000" },
+        { "Fluminense", "#820E2D" },
+        { "Fortaleza EC", "#103E91" },
+        { "Gremio", "#0D80BF" },
+        { "Internacional", "#E20E0E" },
+        { "Juventude", "#008144" },
+        { "Palmeiras", "#006437" },
+        { "Santos", "#1D1D1B" },
+        { "Sao Paulo", "#FE0000" },
+        { "Vasco DA Gama", "#000000" },
+        { "Vitoria", "#BE151B" }
+        // Adicione os demais conforme necessário
+    };
 
 
     protected override async Task OnInitializedAsync()
     {
+        // 1. Busca os anos disponíveis apenas UMA VEZ ao iniciar
+        await CarregarTemporadasDisponiveis();
+
+        // 2. Carrega os jogos do ano padrão
         await CarregarDados();
     }
 
@@ -709,5 +722,25 @@ else
         exibirModal = false;
         jogoSelecionado = null;
     }
+
+    private async Task CarregarTemporadasDisponiveis()
+    {
+        try
+        {
+            var client = ClientFactory.CreateClient("BrasileiraoAPI");
+            // Chamamos o endpoint sem o filtro de ano para pegar a base toda
+            var todosOsJogos = await client.GetFromJsonAsync<List<Jogo>>("api/jogos");
+
+            if (todosOsJogos != null)
+            {
+                temporadasDisponiveisStr = string.Join(" • ",
+                    todosOsJogos.Select(j => j.DataJogo.Year)
+                                .Distinct()
+                                .OrderBy(y => y));
+            }
+        }
+        catch { /* log erro */ }
+    }
+
 
 }

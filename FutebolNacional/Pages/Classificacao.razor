@@ -6,11 +6,14 @@
 <style>
     .grid-calendario {
         display: grid;
-        grid-template-columns: repeat(7, 1fr); /* 7 dias da semana */
-        gap: 10px;
+        /* Cria 7 colunas de tamanhos exatamente iguais */
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px; /* Espaço entre os dias */
+        width: 100%;
+        overflow: hidden; /* Garante que nada saia do container */
     }
 
-    .dia-bloco {
+    /*.dia-bloco {
         aspect-ratio: 1 / 1;
         border: 1px solid #eee;
         display: flex;
@@ -20,7 +23,25 @@
         cursor: pointer;
         border-radius: 8px;
         font-weight: 500;
+    }*/
+
+    .dia-bloco {
+        padding: 5px;
+        text-align: center;
+        word-wrap: break-word; /* Evita que o texto quebre o layout */
+        min-width: 0; /* Permite que o bloco encolha se necessário */
     }
+
+    /* Ajuste para telas muito pequenas */
+@@media (max-width: 576px) {
+    .dia-bloco {
+        min-height: 45px !important;
+        font-size: 0.8rem;
+    }
+    .dia-bloco small {
+        font-size: 0.5rem !important; /* Diminui o texto "⚽ JOGOS" no mobile */
+    }
+}
 
     .dia-com-jogo {
         background-color: #e8f5e9; /* Verde clarinho */
@@ -144,75 +165,84 @@
     /* Vermelho - Derrota */
 </style>
 
-<div class="d-flex align-items-center justify-content-center bg-light p-4 mb-4 rounded shadow-sm"
+
+<div class="d-flex flex-column flex-md-row align-items-center justify-content-center bg-light p-3 p-md-4 mb-4 rounded shadow-sm"
      style="border-left: 8px solid #005c2d; border-right: 8px solid #f9dd16;">
 
+    <!-- Logo: Ajustado o tamanho para mobile e margem responsiva -->
     <img src="img/escudos/brasileiro.png" alt="Logo Brasileirão"
-         style="height: 80px; margin-right: 20px;" />
+         class="mb-3 mb-md-0 me-md-4"
+         style="height: 60px; max-height: 80px; width: auto;" />
 
-    <div class="text-center">
-        <h2 class="fw-bold mb-0" style="color: #004a29; letter-spacing: 1px;">
+    <div class="text-center text-md-start">
+        <h2 class="fw-bold mb-1" style="color: #004a29; letter-spacing: 1px; font-size: calc(1.2rem + 0.6vw);">
             CAMPEONATO BRASILEIRO
         </h2>
-        <span class="badge bg-dark text-white text-uppercase" style="font-size: 0.9rem; letter-spacing: 2px;">
-            Temporadas 2022 • 2023 • 2024
-        </span>
+
+        <!-- Temporadas Dinâmicas -->
+        <div class="d-flex flex-wrap justify-content-center justify-content-md-start">
+            <span class="badge bg-dark text-white text-uppercase" style="font-size: 0.8rem; letter-spacing: 1px; white-space: normal;">
+                Temporadas @(string.IsNullOrEmpty(temporadasDisponiveisStr) ? "..." : temporadasDisponiveisStr+"-"+ tituloPagina)
+                @*Temporadas 2022 • 2023 • 2024*@
+            </span>
+        </div>
     </div>
 </div>
 
 @if (mesExibido > 0)
 {
-    <div class="calendario-container bg-white p-3 shadow-sm rounded">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <!-- Agora o NomeMes(mesExibido) só roda quando mesExibido for 1 a 12 -->
-            <h5>@NomeMes(mesExibido) / @anoSelecionado</h5>
-            <div class="col-md-4">
-                <label class="form-label fw-bold small text-muted">SELECIONE A TEMPORADA</label>
-                <select class="form-select shadow-sm border-2" @onchange="MudarTemporada">
-                    <option value="2024" selected="@(anoSelecionado == 2024)">Temporada 2024</option>
-                    <option value="2023" selected="@(anoSelecionado == 2023)">Temporada 2023</option>
-                    <option value="2022" selected="@(anoSelecionado == 2022)">Temporada 2022</option>
-                </select>
-            </div>
-            <div class="btn-group">
-                <button class="btn btn-outline-secondary btn-sm" @onclick="() => MudarMes(-1)">‹</button>
-                <button class="btn btn-outline-secondary btn-sm" @onclick="() => MudarMes(1)">›</button>
-            </div>
+<div class="calendario-container bg-white p-3 shadow-sm rounded">
+    @*<div class="d-flex justify-content-between align-items-center mb-3">*@
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-3 gap-2">
+        <!-- Agora o NomeMes(mesExibido) só roda quando mesExibido for 1 a 12 -->
+        <h5>@NomeMes(mesExibido) / @anoSelecionado</h5>
+        <div class="col-12 col-md-4">
+            <label class="form-label fw-bold small text-muted">SELECIONE A TEMPORADA</label>
+            <select class="form-select shadow-sm border-2" @onchange="MudarTemporada">
+                <option value="2024" selected="@(anoSelecionado == 2024)">Temporada 2024</option>
+                <option value="2023" selected="@(anoSelecionado == 2023)">Temporada 2023</option>
+                <option value="2022" selected="@(anoSelecionado == 2022)">Temporada 2022</option>
+            </select>
         </div>
+        <div class="btn-group">
+            <button class="btn btn-outline-secondary btn-sm" @onclick="() => MudarMes(-1)">‹</button>
+            <button class="btn btn-outline-secondary btn-sm" @onclick="() => MudarMes(1)">›</button>
+        </div>
+    </div>
 
-        <div class="grid-calendario">
-            @if (mesExibido > 0 && anoSelecionado > 0)
+    <div class="grid-calendario">
+        @if (mesExibido > 0 && anoSelecionado > 0)
+        {
+            // REMOVA O @{ e deixe as variáveis diretamente aqui:
+            var primeiroDiaDoMes = new DateTime(anoSelecionado, mesExibido, 1);
+            int espacosVazios = (int)primeiroDiaDoMes.DayOfWeek;
+
+            @for (int i = 0; i < espacosVazios; i++)
             {
-                // REMOVA O @{ e deixe as variáveis diretamente aqui:
-                var primeiroDiaDoMes = new DateTime(anoSelecionado, mesExibido, 1);
-                int espacosVazios = (int)primeiroDiaDoMes.DayOfWeek;
+                <div class="dia-vazio border-0"></div>}
 
-                @for (int i = 0; i < espacosVazios; i++)
-                {
-                    <div class="dia-vazio border-0"></div>}
+            @for (int dia = 1; dia <= DateTime.DaysInMonth(anoSelecionado, mesExibido); dia++)
+            {
+                var diaLoop = dia;
+                var dataCorrente = new DateTime(anoSelecionado, mesExibido, diaLoop);
+                bool temJogo = diasComJogo != null && diasComJogo.Contains(dataCorrente.Date);
 
-                @for (int dia = 1; dia <= DateTime.DaysInMonth(anoSelecionado, mesExibido); dia++)
-                {
-                    var diaLoop = dia;
-                    var dataCorrente = new DateTime(anoSelecionado, mesExibido, diaLoop);
-                    bool temJogo = diasComJogo != null && diasComJogo.Contains(dataCorrente.Date);
+                <div class="dia-bloco @(temJogo ? "dia-com-jogo" : "")"
+                     title="@ObterNomeDiaSemana(dataCorrente)"
+                     style="cursor: pointer; border: 1px solid #f0f0f0; min-height: 50px;"
+                     @onclick="() => AbrirModalClassificacao(dataCorrente)">
 
-                    <div class="dia-bloco @(temJogo ? "dia-com-jogo" : "")"
-                         title="@ObterNomeDiaSemana(dataCorrente)"
-                         style="cursor: pointer; border: 1px solid #f0f0f0; min-height: 50px;"
-                         @onclick="() => AbrirModalClassificacao(dataCorrente)">
+                    <span class="fw-bold">@diaLoop</span>
 
-                        <span class="fw-bold">@diaLoop</span>
-
-                        @if (temJogo)
-                        {
-                            <small class="text-success d-block" style="font-size: 0.6rem;">⚽ JOGOS</small>}
-                    </div>}}
-        </div>
+                    @if (temJogo)
+                    {
+                        <small class="text-success d-block" style="font-size: 0.6rem;">⚽ JOGOS</small>}
+                </div>}}
+    </div>
 
 
 
-    </div> }
+</div> }
 else
 {
     <div class="text-center p-5">
@@ -334,9 +364,14 @@ else
     private List<LinhaTabela> tabelaSnapshot = new(); // Lista que receberá os pontos calculados
     private List<Jogo> todosJogosAnoAnterior = new();
     private string timeSelecionado = "";
+    private string temporadasDisponiveisStr = ""; // Variável para o Banner
+    private string tituloPagina = "Classificação por dia";
 
     protected override async Task OnInitializedAsync()
     {
+        // 1. Busca os anos disponíveis apenas UMA VEZ ao iniciar
+        await CarregarTemporadasDisponiveis();
+
         await CarregarCalendario();
     }
 
@@ -470,22 +505,6 @@ else
         Console.WriteLine($"Tabela calculada com {tabelaSnapshot.Count} times.");
     }
 
-    //private async Task AbrirModalClassificacao(DateTime dataSelecionada)
-    //{
-    //    dataParaCalculo = dataSelecionada;
-    //    ProcessarClassificacao(dataSelecionada); // Chama o motor aqui!
-    //    exibirModalClassificacao = true;
-
-    //    // Seleciona o líder por padrão para o gráfico inicial
-    //    if (tabelaSnapshot.Any())
-    //    {
-    //        await MostrarGraficoTime(tabelaSnapshot.First().Nome);
-    //    }
-
-
-    //    // OBRIGATÓRIO: Avisa o Blazor que a lista 'tabelaSnapshot' mudou!
-    //    this.StateHasChanged();
-    //}
 
     private async Task AbrirModalClassificacao(DateTime dataSelecionada)
     {
@@ -647,6 +666,25 @@ else
         {
             Console.WriteLine($"Erro ao carregar ano anterior: {ex.Message}");
         }
+    }
+
+    private async Task CarregarTemporadasDisponiveis()
+    {
+        try
+        {
+            var client = ClientFactory.CreateClient("BrasileiraoAPI");
+            // Chamamos o endpoint sem o filtro de ano para pegar a base toda
+            var todosOsJogos = await client.GetFromJsonAsync<List<Jogo>>("api/jogos");
+
+            if (todosOsJogos != null)
+            {
+                temporadasDisponiveisStr = string.Join(" • ",
+                    todosOsJogos.Select(j => j.DataJogo.Year)
+                                .Distinct()
+                                .OrderBy(y => y));
+            }
+        }
+        catch { /* log erro */ }
     }
 
 }
