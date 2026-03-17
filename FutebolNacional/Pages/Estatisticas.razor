@@ -66,23 +66,55 @@
     }
 </style>
 
+<div class="d-flex flex-column flex-md-row align-items-center justify-content-center bg-light p-3 p-md-4 mb-4 rounded shadow-sm"
+     style="border-left: 8px solid #005c2d; border-right: 8px solid #f9dd16;">
+
+    <!-- Logo: Ajustado o tamanho para mobile e margem responsiva -->
+    <img src="img/escudos/brasileiro.png" alt="Logo Brasileirão"
+         class="mb-3 mb-md-0 me-md-4"
+         style="height: 60px; max-height: 80px; width: auto;" />
+
+    <div class="text-center text-md-start">
+        <h2 class="fw-bold mb-1" style="color: #004a29; letter-spacing: 1px; font-size: calc(1.2rem + 0.6vw);">
+            CAMPEONATO BRASILEIRO
+        </h2>
+
+        <!-- Temporadas Dinâmicas -->
+        <div class="d-flex flex-wrap justify-content-center justify-content-md-start">
+            <span class="badge bg-dark text-white text-uppercase" style="font-size: 0.8rem; letter-spacing: 1px; white-space: normal;">
+                Temporadas @(string.IsNullOrEmpty(temporadasDisponiveisStr) ? "..." : temporadasDisponiveisStr)
+                @*Temporadas 2022 • 2023 • 2024*@
+            </span>
+        </div>
+    </div>
+</div>
+
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold">📊 Estatísticas de Gols</h3>
-        <select class="form-select w-25" @onchange="MudarAno">
-            <option value="2024">Temporada 2024</option>
-            <option value="2023">Temporada 2023</option>
-            <option value="2022">Temporada 2022</option>
-        </select>
+    <!-- Removido o justify-content-between para não forçar os itens para as pontas -->
+    <div class="d-flex flex-column mb-4 gap-2">
+        <!-- text-nowrap evita que o título quebre em duas linhas se houver espaço -->
+        <h3 class="fw-bold mb-0 text-nowrap">📊 Estatísticas de Gols</h3>
+        <!-- No mobile o select ocupa 100% (w-100), no desktop volta a ser pequeno (w-md-25) -->
+        <div style="max-width: 220px;">
+            <label class="form-label fw-bold small text-muted mb-1 d-block">TEMPORADA</label>
+            <select class="form-select shadow-sm border-2" @onchange="MudarAno">
+                <option value="2024">Temporada 2024</option>
+                <option value="2023">Temporada 2023</option>
+                <option value="2022">Temporada 2022</option>
+            </select>
+        </div>
     </div>
 
     @if (carregando)
     {
-        <div class="text-center p-5"><div class="spinner-border text-success"></div></div> }
+        <div class="text-center p-5">
+            <div class="spinner-border text-success">
+            </div>
+        </div>
+    }
     else
     {
         <div class="table-responsive bg-white shadow-sm rounded p-3">
-
 
             <!-- Bloco do Pódio com Verificação -->
             <div class="row mb-5 text-center animate__animated animate__fadeIn">
@@ -117,9 +149,7 @@
                     </div>}
             </div>
 
-
-
-            <table class="table align-middle" style="table-layout: fixed; width: 100%;">
+            <table class="table align-middle" ; width: 100%;">
                 <thead>
                     <tr class="text-muted small text-uppercase border-bottom">
                         <!-- Coluna Clube com Ordenador -->
@@ -138,15 +168,15 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="align-middle">
                     @foreach (var clube in listaRanking)
                     {
                         <tr>
-                            <!-- Identificação do Clube -->
-                            <td style="width: 150px; cursor: pointer;" @onclick="() => clube.ExibirDetalhes = !clube.ExibirDetalhes">
-                                <div class="d-flex align-items-center w-100">
-                                    <!-- Ícone de Ranking/Medalha -->
-                                    <span class="me-1">
+                            <!-- Coluna 1: Nome/Sigla (Largura adaptável) -->
+                            <td style="min-width: 100px; cursor: pointer;" @onclick="() => clube.ExibirDetalhes = !clube.ExibirDetalhes">
+                                <div class="d-flex align-items-center">
+                                    <span class="me-1 d-none d-sm-inline">
+                                        <!-- Esconde medalha em telas minúsculas para ganhar espaço -->
                                         @if (listaRanking.IndexOf(clube) == 0)
                                         {<span>🥇</span> }
                                         else if (listaRanking.IndexOf(clube) == 1)
@@ -154,103 +184,87 @@
                                         else if (listaRanking.IndexOf(clube) == 2)
                                         { <span>🥉</span>}
                                     </span>
-
-                                    <img src="img/escudos/@(clube.Nome).png" width="25" class="me-2" />
-                                    <span class="fw-bold">@clube.Sigla</span>
-
-                                    <!-- O ÍCONE DO BOTÃO (Agora forçado com margem à esquerda automática) -->
-                                    <i class="fas fa-chevron-down chevron-icon @(clube.ExibirDetalhes ? "chevron-rotated" : "") ms-auto"></i>
+                                    <img src="img/escudos/@(clube.Nome).png" width="22" class="me-1 me-md-2" />
+                                    <span class="fw-bold small">@clube.Sigla</span>
+                                    <i class="fas fa-chevron-down ms-auto @(clube.ExibirDetalhes ? "chevron-rotated" : "")" style="font-size: 0.7rem;"></i>
                                 </div>
                             </td>
 
-                            <!-- Área das Barras de Progresso -->
-                            <td style="width: 60%; padding: 20px 15px;">
-                                <!-- Bloco Gols Feitos -->
-                                <div class="mb-3">
-                                    <!-- INFORMAÇÃO ACIMA DA BARRA VERDE -->
-                                    <div class="small fw-bold mb-1" style="color: #157347;">
-                                        Gols Feitos: @clube.GolsFeitos
+                            <!-- Coluna 2: Barras (Ocupa o resto do espaço) -->
+                            <td class="px-2 px-md-3" style="width: 100%;">
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between small fw-bold mb-1" style="color: #157347; font-size: 0.7rem;">
+                                        <span>Gols Feitos:</span> <span>@clube.GolsFeitos</span>
                                     </div>
-                                    <div class="barra-bg" style="background-color: #eee; height: 10px; border-radius: 5px; overflow: hidden;"
-                                         title="Representa @(clube.GetPorcentagemFeitos(totalGolsCampeonato).ToString("F2"))% do total do campeonato">
-                                        <div style="width: @(clube.GetPorcentagemFeitos(totalGolsCampeonato).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))%;
-                        background-color: #28a745; height: 100%; transition: width 1s;">
-                                        </div>
+                                    <div class="barra-bg" style="background-color: #eee; height: 8px; border-radius: 4px; overflow: hidden;">
+                                        <div style="width: @(clube.GetPorcentagemFeitos(totalGolsCampeonato).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))%; background-color: #28a745; height: 100%;"></div>
                                     </div>
                                 </div>
-                                <!-- Bloco Gols Levados -->
                                 <div>
-                                    <!-- INFORMAÇÃO ACIMA DA BARRA VERMELHA -->
-                                    <div class="small fw-bold mb-1" style="color: #bb2d3b;">
-                                        Gols Levados: @clube.GolsSofridos
+                                    <div class="d-flex justify-content-between small fw-bold mb-1" style="color: #bb2d3b; font-size: 0.7rem;">
+                                        <span>Sofridos:</span> <span>@clube.GolsSofridos</span>
                                     </div>
-                                    <div class="barra-bg" style="background-color: #eee; height: 10px; border-radius: 5px; overflow: hidden;"
-                                         title="Representa @(clube.GetPorcentagemSofridos(totalGolsCampeonato).ToString("F2"))% do total do campeonato">
-                                        <div style="width: @(clube.GetPorcentagemSofridos(totalGolsCampeonato).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))%;
-                        background-color: #dc3545; height: 100%; transition: width 1s;">
-                                        </div>
+                                    <div class="barra-bg" style="background-color: #eee; height: 8px; border-radius: 4px; overflow: hidden;">
+                                        <div style="width: @(clube.GetPorcentagemSofridos(totalGolsCampeonato).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))%; background-color: #dc3545; height: 100%;"></div>
                                     </div>
                                 </div>
                             </td>
-                            <!-- Card de Saldo (Perfeitamente Alinhado com o Cabeçalho) -->
-                            <td>
-                                <div class="card shadow-sm border-0 mx-auto @(clube.Saldo >= 0 ? "bg-success" : "bg-danger") text-white text-center"
-                                     style="width: 70px; padding: 5px; border-radius: 8px;">
-                                    <small style="font-size: 0.55rem; opacity: 0.8; display: block;">SALDO</small>
-                                    <div class="fw-bold" style="font-size: 0.9rem;">
+
+                            <!-- Coluna 3: Saldo (Compacto para não empurrar a barra) -->
+                            <td class="text-end" style="min-width: 60px;">
+                                <div class="card shadow-sm border-0 @(clube.Saldo >= 0 ? "bg-success" : "bg-danger") text-white text-center py-1 px-1"
+                                     style="width: 55px; border-radius: 6px; margin-left: auto;">
+                                    <small style="font-size: 0.5rem; opacity: 0.8; display: block;">SALDO</small>
+                                    <div class="fw-bold" style="font-size: 0.8rem;">
                                         @(clube.Saldo > 0 ? "+" : "")@clube.Saldo
                                     </div>
                                 </div>
                             </td>
                         </tr>
-
+ <!-- Detalhes Expansíveis (Ajuste de Amarelos e Vermelhos) -->
                         @if (clube.ExibirDetalhes)
                         {
-                            <tr class="bg-light shadow-sm">
-                                <td colspan="3" class="p-0 border-0">
-                                    <!-- A animação acontece nesta div -->
-                                    <div class="animate__animated animate__fadeInDown animate__faster p-3">
-                                        <div class="d-flex justify-content-around align-items-center">
+                            <tr class="bg-light">
+                                <td colspan="3" class="p-2 border-0">
+                                    <div class="animate__animated animate__fadeInDown animate__faster">
+                                        <!-- Mudamos para flex-column no mobile para não esmagar -->
+                                        <div class="d-flex flex-column flex-sm-row justify-content-around align-items-center gap-3">
 
-                                            <!-- Bloco Artilheiro (Com ícone de chuteira) -->
                                             <div class="text-center">
-                                                <small class="text-muted d-block mb-1">👟 Principal Artilheiro</small>
-                                                <span class="fw-bold text-dark">@clube.MelhorArtilheiro</span>
-                                                <span class="badge rounded-pill bg-success ms-2">@clube.GolsArtilheiro Gols</span>
+                                                <small class="text-muted d-block mb-0">👟 Artilheiro</small>
+                                                <span class="fw-bold small">@clube.MelhorArtilheiro</span>
+                                                <span class="badge rounded-pill bg-success ms-1">@clube.GolsArtilheiro</span>
                                             </div>
 
-                                            <!-- Divisor Vertical -->
-                                            <div style="width: 1px; height: 40px; background-color: #dee2e6;"></div>
+                                            <div class="d-none d-sm-block" style="width: 1px; height: 30px; background-color: #dee2e6;"></div>
 
-                                            <!-- Bloco de Cartões -->
-                                            <div class="d-flex gap-4">
+                                            <!-- Cartões com gap maior para mobile -->
+                                            <div class="d-flex gap-5 gap-sm-4">
                                                 <div class="text-center">
                                                     <small class="text-muted d-block mb-1">Amarelos</small>
-                                                    <div class="d-flex align-items-center justify-content-center">
-                                                        <i class="fas fa-id-card text-warning me-2"></i>
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="fas fa-id-card text-warning me-1"></i>
                                                         <span class="fw-bold">@clube.Amarelos</span>
                                                     </div>
                                                 </div>
                                                 <div class="text-center">
                                                     <small class="text-muted d-block mb-1">Vermelhos</small>
-                                                    <div class="d-flex align-items-center justify-content-center">
-                                                        <i class="fas fa-id-card text-danger me-2"></i>
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="fas fa-id-card text-danger me-1"></i>
                                                         <span class="fw-bold">@clube.Vermelhos</span>
                                                     </div>
                                                 </div>
                                             </div>
-
                                         </div>
                                     </div>
                                 </td>
                             </tr>
-                        }
-
-                    }
+}}
                 </tbody>
-            </table>
 
-        </div>}
+            </table>
+        </div>
+    }
 </div>
 
 
@@ -261,10 +275,20 @@
     private int maxGols = 0; // <--- ADICIONE ESTA LINHA AQUI
     private int anoSelecionado = 2024;
     private bool carregando = true;
+    private string temporadasDisponiveisStr = ""; // Variável para o Banner
+    private string tituloPagina = "";
 
     private List<ArtilheiroGeral> topArtilheiros = new();
 
-    protected override async Task OnInitializedAsync() => await CarregarDados();
+    protected override async Task OnInitializedAsync()
+    {
+        // 1. Busca os anos disponíveis apenas UMA VEZ ao iniciar
+        await CarregarTemporadasDisponiveis();
+
+        //=> await CarregarDados();
+        await CarregarDados();
+    }
+
 
     private async Task CarregarDados()
     {
@@ -381,5 +405,26 @@
         if (campo == "Nome") listaRanking = listaRanking.OrderBy(x => x.Nome).ToList();
         else if (campo == "Gols") listaRanking = listaRanking.OrderByDescending(x => x.GolsFeitos).ToList();
         else if (campo == "Saldo") listaRanking = listaRanking.OrderByDescending(x => x.Saldo).ToList();
-    } }
+    }
+
+    private async Task CarregarTemporadasDisponiveis()
+    {
+        try
+        {
+            var client = ClientFactory.CreateClient("BrasileiraoAPI");
+            // Chamamos o endpoint sem o filtro de ano para pegar a base toda
+            var todosOsJogos = await client.GetFromJsonAsync<List<Jogo>>("api/jogos");
+
+            if (todosOsJogos != null)
+            {
+                temporadasDisponiveisStr = string.Join(" • ",
+                    todosOsJogos.Select(j => j.DataJogo.Year)
+                                .Distinct()
+                                .OrderBy(y => y));
+            }
+        }
+        catch { /* log erro */ }
+    }
+
+}
 
