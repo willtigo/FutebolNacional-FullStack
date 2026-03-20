@@ -5,9 +5,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>FutebolNacional</title>
-    <base href="/" />
+    <!--<base href="/" />-->
+    <!--<base href="/app/" />-->
+    <script>
+        var path = window.location.pathname.includes('/app') ? '/app/' : '/';
+        document.write('<base href="' + path + '" />');
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link href="css/app.css" rel="stylesheet" />
     <link href="FutebolNacional.styles.css" rel="stylesheet" />

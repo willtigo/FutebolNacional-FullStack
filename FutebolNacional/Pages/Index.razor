@@ -1,7 +1,306 @@
 ﻿@page "/"
+@using FutebolNacional.Models
+@using System.Text.Json
+@inject HttpClient Http
 
-<h1>Hello, world!</h1>
+<style>
+    /* Container de logos: no mobile vira um carrossel horizontal, no PC quebra linha */
+    .filtro-logos-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+        padding: 10px;
+    }
 
-Welcome to your new app.
+    /* Estilo de cada escudo */
+    .escudo-wrapper {
+        cursor: pointer;
+        transition: transform 0.2s, filter 0.2s;
+        width: 50px; /* Tamanho padrão */
+        opacity: 0.6;
+        filter: grayscale(100%);
+    }
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+        .escudo-wrapper:hover {
+            transform: scale(1.2);
+            opacity: 1;
+            filter: grayscale(0%);
+        }
+
+        /* Quando o time está selecionado */
+        .escudo-wrapper.ativo {
+            opacity: 1;
+            filter: grayscale(0%);
+            border-bottom: 3px solid #005c2d;
+            transform: scale(1.1);
+        }
+
+    /* Ajuste Mobile: Se houver muitos times, permite scroll horizontal */
+    @@media (max-width: 576px) {
+        .filtro-logos-container {
+            flex-wrap: nowrap;
+            justify-content: flex-start;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 15px;
+        }
+
+        .escudo-wrapper {
+            flex: 0 0 auto; /* Impede os logos de esmagarem */
+            width: 45px;
+        }
+    }
+
+    /* Container que segura os logos */
+    .filtros-container {
+        display: flex;
+        gap: 15px;
+        padding: 10px;
+        overflow-x: auto; /* Ativa o scroll horizontal */
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch; /* Scroll suave no iPhone */
+    }
+
+        /* Esconde a barra de scroll para ficar mais limpo */
+        .filtros-container::-webkit-scrollbar {
+            display: none;
+        }
+
+    .escudo-item {
+        flex: 0 0 auto; /* Impede que o logo encolha */
+        width: 60px;
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+        .escudo-item:hover {
+            transform: scale(1.1);
+        }
+
+    .news-card:hover {
+        background-color: #fff9e6;
+        transform: translateY(-5px);
+        transition: 0.3s;
+    }
+
+    /* Estilo que lembra tipografia de jornal para o título */
+    .modal-title {
+        font-family: 'Impact', 'Arial Black', sans-serif;
+        font-size: 1.8rem;
+    }
+
+    .modal-content {
+        box-shadow: 10px 10px 0px rgba(0,0,0,0.2); /* Sombra dura estilo gráfico */
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="d-flex flex-column flex-md-row align-items-center justify-content-center bg-light p-3 p-md-4 mb-4 rounded shadow-sm"
+         style="border-left: 8px solid #005c2d; border-right: 8px solid #f9dd16;">
+        <img src="img/escudos/FutebolNacional.png" alt="Logo" class="mb-3 mb-md-0 me-md-4" style="height: 80px; width: auto;" />
+        <div class="text-center text-md-start">
+            <h2 class="fw-bold mb-0" style="color: #004a29;">FUTEBOL NACIONAL</h2>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-body bg-light rounded text-center">
+            <h6 class="text-muted fw-bold mb-3 small" style="letter-spacing: 1px;">FILTRAR POR CLUBE</h6>
+
+            <!-- Adicionada a classe filtros-container para o scroll no mobile -->
+            <div class="d-flex flex-wrap justify-content-center gap-3 filtros-container">
+                @if (listaClubes != null)
+                {
+                    foreach (var time in listaClubes)
+                    {
+                        <!-- Estrutura original mantida, apenas adicionada a classe escudo-item -->
+                        <div class="escudo-item @(timeSelecionado == time ? "ativo" : "")"
+                             @onclick="() => SelecionarTime(time)"
+                             style="cursor:pointer; width: 50px; transition: 0.3s; opacity: @(timeSelecionado == time ? "1" : "0.5")"
+                             title="@time">
+
+                            <img src="img/escudos/@(time).png"
+                                 class="img-fluid"
+                                 onerror="this.src='img/escudos/default.png';" />
+
+                            <!-- Nome do time abaixo do logo (opcional, mas ajuda na leitura) -->
+                            <div class="small fw-bold mt-1 d-block d-md-none" style="font-size: 0.55rem; text-transform: uppercase;">
+                                @time
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            @if (!string.IsNullOrEmpty(timeSelecionado))
+            {
+        <div class="mt-3 text-success fw-bold animate__animated animate__fadeIn">
+            📰 Últimas do @nomeExibicao
+        </div>
+            }
+        </div>
+
+        @if (carregando)
+        {
+            <div class="text-center p-5"><div class="spinner-border text-success"></div></div>}
+
+        <div class="row mt-4">
+            @foreach (var noticia in listaNoticias)
+            {
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100 shadow-sm border-0 news-card" @onclick="() => noticiaSelecionada = noticia" style="cursor:pointer">
+                        <div class="card-body">
+                            <small class="text-muted">@noticia.PublishedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                            <h6 class="fw-bold mt-2">@noticia.Title</h6>
+                            <small class="text-success fw-bold">Fonte: @noticia.SourceName</small>
+                        </div>
+                    </div>
+                </div>}
+        </div>
+
+        <!-- Modal Estilo Jornal Antigo -->
+        @if (noticiaSelecionada != null)
+        {
+            <div class="modal fade show d-block" style="background: rgba(0,0,0,0.7);">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content border-0" style="background-color: #f4f1ea; font-family: 'Georgia', serif;">
+                        <div class="modal-header border-dark">
+                            <h4 class="modal-title fw-bold text-uppercase" style="letter-spacing: -1px; border-bottom: 3px solid black;">FUTEBOL NACIONAL! DIGITAL</h4>
+                            <button type="button" class="btn-close" @onclick="() => noticiaSelecionada = null"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <h2 class="fw-bold mb-3" style="line-height: 1; color: #1a1a1a;">@noticiaSelecionada.Title</h2>
+                            <div class="d-flex justify-content-between border-top border-bottom border-dark py-2 mb-3 small fw-bold">
+                                <span>EDIÇÃO ESPECIAL: @noticiaSelecionada.PublishedAt.ToLongDateString()</span>
+                                <span>FONTE: @noticiaSelecionada.SourceName</span>
+                            </div>
+                            <p class="fs-5" style="text-align: justify; line-height: 1.6; color: #333;">
+                                @noticiaSelecionada.Description
+                            </p>
+                            <hr class="border-dark" />
+                            <div class="text-center">
+                                <a href="@noticiaSelecionada.Url" target="_blank" class="btn btn-dark rounded-0 px-4">LER MATÉRIA COMPLETA</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>}
+
+    </div>
+</div>
+
+@code {
+    private List<string> listaClubes = new List<string> {
+        "Flamengo", "Palmeiras", "Corinthians", "Sao Paulo", "Fortaleza EC",
+        "Atletico-MG", "America Mineiro", "Criciuma", "Avai", "Cruzeiro",
+        "Santos", "Vasco DA Gama", "Juventude", "Internacional", "Bahia",
+        "Goias", "Cuiaba", "Botafogo", "Atletico Goianiense", "Ceara",
+        "Gremio", "RB Bragantino", "Atletico Paranaense", "Coritiba",
+        "Vitoria", "Fluminense", "Remo"
+    }; // <-- Verifique se fechou com };
+
+    private Dictionary<string, string> nomesParaBusca = new Dictionary<string, string>
+    {
+        { "Flamengo", "Clube de Regatas do Flamengo" },
+        { "Palmeiras", "Sociedade Esportiva Palmeiras" },
+        { "Corinthians", "Sport Club Corinthians Paulista" },
+        { "Sao Paulo", "São Paulo FC" },
+        { "Fortaleza EC", "Fortaleza Esporte Clube" },
+        { "Atletico-MG", "Atlético Mineiro" },
+        { "America Mineiro", "América Futebol Clube Mineiro" },
+        { "Criciuma", "Criciúma Esporte Clube" },
+        { "Avai", "Avaí Futebol Clube" },
+        { "Cruzeiro", "Cruzeiro Esporte Clube" },
+        { "Santos", "Santos Futebol Clube" },
+        { "Vasco DA Gama", "Club de Regatas Vasco da Gama" },
+        { "Juventude", "Esporte Clube Juventude" },
+        { "Internacional", "Sport Club Internacional" },
+        { "Bahia", "Esporte Clube Bahia" },
+        { "Goias", "Goiás Esporte Clube" },
+        { "Cuiaba", "Cuiabá Esporte Clube" },
+        { "Botafogo", "Botafogo de Futebol e Regatas" },
+        { "Atletico Goianiense", "Atlético Clube Goianiense" },
+        { "Ceara", "Ceará Sporting Club" },
+        { "Gremio", "Grêmio FBPA" },
+        { "RB Bragantino", "Red Bull Bragantino" },
+        { "Atletico Paranaense", "Athletico Paranaense" },
+        { "Coritiba", "Coritiba Foot Ball Club" },
+        { "Vitoria", "Esporte Clube Vitória" },
+        { "Fluminense", "Fluminense Football Club" },
+        { "Remo", "Clube do Remo" }
+    };
+
+
+    private List<NewsArticle> listaNoticias = new();
+    private NewsArticle noticiaSelecionada;
+    private bool carregando = false;
+    private string timeSelecionado;
+    private string nomeExibicao;
+
+  private async Task SelecionarTime(string time)
+{
+    // 1. Lógica visual: se clicar no mesmo, desmarca. Se clicar em outro, seleciona.
+    timeSelecionado = (timeSelecionado == time) ? null : time;
+
+    if (string.IsNullOrEmpty(timeSelecionado))
+    {
+        nomeExibicao = null;
+        listaNoticias.Clear();
+        return;
+    }
+
+    carregando = true;
+    listaNoticias.Clear();
+
+    try
+    {
+        // --- TRADUÇÃO DO NOME PELO DICIONÁRIO ---
+        nomeExibicao = nomesParaBusca.TryGetValue(time, out var nomeCompleto)
+                          ? nomeCompleto
+                          : time;
+
+        // Chamada para a SUA WebAPI (Ponte/Proxy)
+        // O HttpClient (Http) já deve estar configurado com a BaseAddress da sua API
+        // O Uri.EscapeDataString garante que nomes como "Atlético-MG" não quebrem a rota
+        var response = await Http.GetAsync($"api/noticias/{Uri.EscapeDataString(nomeExibicao)}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            using var doc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
+
+            // A estrutura do JSON que sua API repassa do GNews continua a mesma
+            if (doc.RootElement.TryGetProperty("articles", out var articles))
+            {
+                foreach (var item in articles.EnumerateArray())
+                {
+                    listaNoticias.Add(new NewsArticle
+                    {
+                        Title = item.GetProperty("title").GetString(),
+                        Description = item.GetProperty("description").GetString(),
+                        Url = item.GetProperty("url").GetString(),
+                        PublishedAt = item.GetProperty("publishedAt").GetDateTime(),
+                        // Acessando source -> name vindo do GNews via sua API
+                        SourceName = item.GetProperty("source").GetProperty("name").GetString()
+                    });
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine($"Erro ao chamar a Ponte de Notícias: {response.StatusCode}");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Erro de conexão com a WebAPI: {ex.Message}");
+    }
+    finally
+    {
+        carregando = false;
+    }
+}
+
+
+}
